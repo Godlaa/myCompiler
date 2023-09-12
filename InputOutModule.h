@@ -3,14 +3,16 @@
 class InputOutModule
 {
 public:
-	unsigned linenumber; // Номер строки
-	unsigned charnumber; // Номер символа в строке
+	unsigned linenumber; // Row num
+	unsigned charnumber; // Char num in row 
+	class InputOutModule()
+	{
+		linenumber = 0;
+		charnumber = 0;
+	}
 	char nextChar()
 	{
-		if (linenumber == LastInLine)
-		{
 
-		}
 	}
 private:
 
