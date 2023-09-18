@@ -1,7 +1,7 @@
 #include "ÑToken.h"
 
 int main() {
-	ÑToken* cur = nullptr;
+	CToken* cur = nullptr;
 	do
 	{
 		cur = next();

@@ -95,13 +95,13 @@ enum class TokenIdent {
     UNRESERVED
 };
 
-class ÑToken{
+class CToken{
 public:
 	TokenType type;
 	virtual void Print() { };
 };
 
-class CIdent : public ÑToken {
+class CIdent : public CToken {
 	TokenIdent Ident;
     CIdent(TokenIdent Ident) {
 
