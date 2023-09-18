@@ -130,10 +130,10 @@
     <ClCompile Include="Compiler.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="InputOutModule.h" />
+    <Text Include="PascalCode.txt" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="PascalCode.txt" />
+    <ClInclude Include="СToken.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1,7 +1,12 @@
-#include "InputOutModule.h"
+#include "ÑToken.h"
 
 int main() {
-	InputOutModule InputOutModule{ };
+	ÑToken* cur = nullptr;
+	do
+	{
+		cur = next();
+		if (cur) Print(cur);
+	} while (cur);
 
 
 	return 0;
