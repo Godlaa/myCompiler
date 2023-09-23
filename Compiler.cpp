@@ -1,12 +1,13 @@
 #include "ÑToken.h"
 
 int main() {
-	CToken* cur = nullptr;
-	do
+	Token* cur = nullptr;
+	std::string pascalCode = "program HelloWorld; begin writeln('Hello, world!'); end.";
+	while(cur)
 	{
-		cur = next();
-		if (cur) Print(cur);
-	} while (cur);
+		cur = getNextToken(0, pascalCode);
+		if (cur) cur->Print();
+	}
 
 
 	return 0;
