@@ -1,14 +1,22 @@
 #include "СToken.h"
-
+#include <fstream>
 int main() {
 	Token* cur = nullptr;
-	std::string pascalCode = "program HelloWorld; begin writeln('Hello, world!'); end.";
-	while(cur)
+	size_t position = 0;
+	string path = "D:\\myCompiler\\PascalCode.txt";
+	string line;
+	ifstream file(path);
+	if (file.is_open())
 	{
-		cur = getNextToken(0, pascalCode);
-		if (cur) cur->Print();
+		while (getline(file, line))
+		{
+			while (position < line.size()) {
+				Token* token = getNextToken(position, line);
+				token->Print();
+			}
+			position = 0;
+		}
 	}
-
-
+	file.close();     // закрываем файл
 	return 0;
 }

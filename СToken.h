@@ -21,6 +21,8 @@ enum eSpecialSumbols {
     ssDot,
     ssRightCurveBrascet,
     ssLeftCurveBrascet,
+    ssEqual,
+    ssSemicolon,
 };
 enum eVariantType {
     vtInt,
@@ -32,144 +34,126 @@ enum eVariantType {
 class Token {
 public:
     eTokenType type;
-    virtual void Print() { cout << type; };
+    virtual void Print() {  };
 };
 
 class IdentToken : public Token {
+public:
     string ident;
-    void Print() {  };
+    void Print( ) { 
+        cout << ident << endl;
+    };
 };
 
 class KeyWordToken : public Token {
     eKeyWords kw;
+    void Print() { 
+        switch (kw)
+        {
+        case kwIf:
+            cout << "kwIf";
+        }
+    };
 };
 
 class ConstToken : public Token {
 public:
     std::variant<int, float, std::string, bool> data;
+    void Print() { 
+
+    };
 };
 
 class SpecialSymblos : public Token {
 public:
     eSpecialSumbols ss;
+    void Print() { 
+        switch (ss)
+        {
+        case ssComma:
+            cout << "ssComma" << endl;
+            break;
+        case ssDot:
+            cout << "ssDot" << endl;
+            break;
+        case ssRightCurveBrascet:
+            cout << "ssRightCurveBrascet" << endl;
+            break;
+        case ssLeftCurveBrascet:
+            cout << "ssLeftCurveBrascet" << endl;
+            break;
+        case ssEqual:
+            cout << "ssEqual" << endl;
+            break;
+        case ssSemicolon:
+            cout << "ssSemicolon" << endl;
+            break;
+        }
+    }
 };
 
+Token* getNextToken(size_t& position, const string& input) {
+    while (position < input.size() && isspace(input[position]))
+        position++;
 
-Token* getNextToken(int currentPosition, string sourceCode) {
-    // Пропускаем пробелы и переводы строк
-    while (currentPosition < sourceCode.length() && (sourceCode[currentPosition] == ' ' || sourceCode[currentPosition] == '\n'))
-        currentPosition++;
-
-    if (currentPosition >= sourceCode.length()) {
-        //  токен "конец файла"
-        SpecialSymblos *token = new SpecialSymblos();
-        token -> type = eTokenType::ttSpecialSymblos;
-        token -> ss = eSpecialSumbols::ssDot;  // Пусть точка будет обозначением конца файла
+    if (position >= input.size()){
+        Token *token = new Token();
+        token->type = UNKNOWN;
         return token;
     }
 
-    // Распознавание токенов
-    char currentChar = sourceCode[currentPosition];
+    char currentChar = input[position];
 
-    // Распознаем числа
-    if (isdigit(currentChar)) {
-        ConstToken *token = new ConstToken();;
-        token->type = eTokenType::ttConstants;
-        token->data = (int)sourceCode[currentPosition];
-
-        while (currentPosition < sourceCode.length() && isdigit(sourceCode[currentPosition])) {
-            token->data =+ sourceCode[currentPosition];
-            currentPosition++;
+    if (currentChar == ':') {
+        position++;
+        if (position < input.size() && input[position] == '=') {
+            position++;
+            SpecialSymblos *token = new SpecialSymblos();
+            token -> type = ttSpecialSymblos;
+            token -> ss = ssEqual;
+            return token;
         }
-
+    }
+    else if (currentChar == ';') {
+        position++;
+        SpecialSymblos *token = new SpecialSymblos();
+        token -> type = ttSpecialSymblos;
+        token -> ss = ssSemicolon;
         return token;
     }
+    else if (isalpha(currentChar)) {
+        // Идентификатор начинается с буквы
+        string identifier;
+        while (position < input.size() && (isalpha(input[position]) || isdigit(input[position])))
+            identifier += input[position++];
 
-    // Добавь распознавание других типов токенов (идентификаторы, операторы, ключевые слова, специальные символы, типы и т. д.) здесь
+        IdentToken *idToken = new IdentToken();
+        idToken->type = ttIdentifier;
+        idToken->ident = identifier;
+        return idToken;
+    }
+    else if (isdigit(currentChar)) {
+        // Числовая константа - может быть целочисленной или вещественной
+        string number;
+        while (position < input.size() && (isdigit(input[position]) || input[position] == '.'))
+            number += input[position++];
 
-    // Если не удалось распознать токен, вернем ошибку
+        if (number.find('.') != string::npos) {
+            ConstToken *realToken = new ConstToken();
+            realToken->type = ttConstants;
+            realToken->data = stof(number);
+            return realToken;
+        }
+        else {
+            ConstToken *intToken = new ConstToken();
+            intToken->type = ttConstants;
+            intToken->data = stoi(number);
+            return intToken;
+        }
+    }
+
     Token* token = new Token();
-    token->type = eTokenType::UNKNOWN;
+    token->type = UNKNOWN;
     return token;
 }
-
-
-//enum class TokenIdent {
-//    AND,
-//    FOR,
-//    TO,
-//    DOWNTO,
-//    DO,
-//    IF,
-//    THEN,
-//    ELSE,
-//    WHILE,
-//    REPEAT,
-//    UNTIL,
-//    FUNCTION, 
-//    PROCEDURE,
-//    BEGIN,
-//    END,
-//    PROGRAM,
-//    FORWARD,
-//    GOTO,
-//    OR,
-//    NOT,
-//    CASE,
-//    OTHERWISE,
-//    WITH,
-//    IN,
-//
-//    // I/O routine
-//    WRITE,
-//    WRITELN,
-//    READ,
-//    READLN,
-//
-//    // type/var/const
-//    TYPE,
-//    VAR,
-//    PACKED,
-//    ARRAY,
-//    OF,
-//    RECORD,
-//    CONST,
-//    FILE,
-//    SET,
-//    STRING,
-//    NIL,
-//
-//    // symbols
-//    LEFT_PAREN,        // (
-//    RIGHT_PAREN,       // )
-//    LEFT_SQUARE,       // [
-//    RIGHT_SQUARE,      // ]
-//    PLUS,              // +
-//    MINUS,             // -
-//    MULTIPLY,          // *
-//    DIVIDE,            // /
-//    COMMA,             // ,
-//    SEMICOLON,         // ;
-//    COLON,             // :
-//    ASSIGN,            // :=
-//    PERIOD,            // .
-//    DOT_DOT,           // ..
-//    UPARROW,           // ^
-//    DIV,               // div
-//    MOD,               // mod
-//    XOR,               // xor
-//    SHR,               // shr
-//    SHL,               // shl
-//
-//    // comparation symbols
-//    LESS_OR_EQUAL,     // <=
-//    LESS_THAN,         // <
-//    GREATER_OR_EQUAL,  // >=
-//    GREATER_THAN,      // >
-//    EQUAL,             // =
-//    NOT_EQUAL,         // <>
-//
-//    UNRESERVED
-//};
-
 
