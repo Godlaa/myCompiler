@@ -15,6 +15,9 @@ enum eKeyWords {
     kwIf,
     kwThen,
     kwBegin,
+    kwProgram,
+    kwEnd,
+    kwWriteln,
 };
 enum eSpecialSumbols {
     ssComma,
@@ -41,17 +44,34 @@ class IdentToken : public Token {
 public:
     string ident;
     void Print( ) { 
-        cout << ident << endl;
+        cout << ident << ' ';
     };
 };
 
 class KeyWordToken : public Token {
+public:
     eKeyWords kw;
-    void Print() { 
+    void Print() {
         switch (kw)
         {
         case kwIf:
-            cout << "kwIf";
+            cout << "kwIf" << ' ';
+            break;
+        case kwThen:
+            cout << "kwThen" << ' ';
+            break;
+        case kwBegin:
+            cout << "kwBegin" << ' ';
+            break;
+        case kwProgram:
+            cout << "kwProgram" << ' ';
+            break;
+        case kwEnd:
+			cout << "kwEnd" << ' ';
+			break;
+        case kwWriteln:
+            cout << "kwWriteln" << ' ';
+            break;
         }
     };
 };
@@ -60,7 +80,18 @@ class ConstToken : public Token {
 public:
     std::variant<int, float, std::string, bool> data;
     void Print() { 
-
+        if (data.index() == vtInt) {
+			cout << std::get<int>(data) << ' ';
+		}
+        else if (data.index() == vtReal) {
+			cout << std::get<float>(data) << ' ';
+		}
+        else if (data.index() == vtString) {
+			cout << std::get<std::string>(data) << ' ';
+		}
+        else if (data.index() == vtBool) {
+			cout << std::get<bool>(data) << ' ';
+		}
     };
 };
 
@@ -71,29 +102,29 @@ public:
         switch (ss)
         {
         case ssComma:
-            cout << "ssComma" << endl;
+            cout << "ssComma" << ' ';
             break;
         case ssDot:
-            cout << "ssDot" << endl;
+            cout << "ssDot" << ' ';
             break;
         case ssRightCurveBrascet:
-            cout << "ssRightCurveBrascet" << endl;
+            cout << "ssRightCurveBrascet" << ' ';
             break;
         case ssLeftCurveBrascet:
-            cout << "ssLeftCurveBrascet" << endl;
+            cout << "ssLeftCurveBrascet" << ' ';
             break;
         case ssEqual:
-            cout << "ssEqual" << endl;
+            cout << "ssEqual" << ' ';
             break;
         case ssSemicolon:
-            cout << "ssSemicolon" << endl;
+            cout << "ssSemicolon" << ' ';
             break;
         }
     }
 };
 
 Token* getNextToken(size_t& position, const string& input) {
-    while (position < input.size() && isspace(input[position]))
+    while (position < input.size() && isspace(input[position])) // skip space
         position++;
 
     if (position >= input.size()){
@@ -101,39 +132,101 @@ Token* getNextToken(size_t& position, const string& input) {
         token->type = UNKNOWN;
         return token;
     }
-
     char currentChar = input[position];
 
-    if (currentChar == ':') {
+    if (currentChar == ':') { // special simbols
         position++;
         if (position < input.size() && input[position] == '=') {
             position++;
-            SpecialSymblos *token = new SpecialSymblos();
-            token -> type = ttSpecialSymblos;
-            token -> ss = ssEqual;
+            SpecialSymblos* token = new SpecialSymblos();
+            token->type = ttSpecialSymblos;
+            token->ss = ssEqual;
             return token;
         }
     }
-    else if (currentChar == ';') {
+    else if (currentChar == ';') { 
         position++;
         SpecialSymblos *token = new SpecialSymblos();
         token -> type = ttSpecialSymblos;
         token -> ss = ssSemicolon;
         return token;
     }
-    else if (isalpha(currentChar)) {
-        // Идентификатор начинается с буквы
+    else if (currentChar == ',') {
+        position++;
+        SpecialSymblos* token = new SpecialSymblos();
+        token->type = ttSpecialSymblos;
+        token->ss = ssComma;
+        return token;
+    }
+    else if (currentChar == '.') {
+        position++;
+        SpecialSymblos* token = new SpecialSymblos();
+        token->type = ttSpecialSymblos;
+        token->ss = ssDot;
+        return token;
+    }
+    else if (currentChar == '(') {
+        position++;
+        SpecialSymblos* token = new SpecialSymblos();
+        token->type = ttSpecialSymblos;
+        token->ss = ssLeftCurveBrascet;
+        return token;
+    }
+    else if (currentChar == ')') {
+        position++;
+        SpecialSymblos* token = new SpecialSymblos();
+        token->type = ttSpecialSymblos;
+        token->ss = ssRightCurveBrascet;
+        return token;
+    }
+
+    else if (isalpha(currentChar)) { // kw, ident
         string identifier;
         while (position < input.size() && (isalpha(input[position]) || isdigit(input[position])))
             identifier += input[position++];
 
+        if (identifier == "program") {
+            KeyWordToken* kwToken = new KeyWordToken();
+            kwToken->type = ttKeywords;
+            kwToken->kw = kwProgram;
+            return kwToken;
+        }
+        else if (identifier == "if") {
+			KeyWordToken* kwToken = new KeyWordToken();
+			kwToken->type = ttKeywords;
+			kwToken->kw = kwIf;
+			return kwToken;
+		}
+		else if (identifier == "then") {
+			KeyWordToken* kwToken = new KeyWordToken();
+			kwToken->type = ttKeywords;
+			kwToken->kw = kwThen;
+			return kwToken;
+		}
+		else if (identifier == "begin") {
+			KeyWordToken* kwToken = new KeyWordToken();
+			kwToken->type = ttKeywords;
+			kwToken->kw = kwBegin;
+			return kwToken;
+		}
+        else if (identifier == "end") {
+            KeyWordToken* kwToken = new KeyWordToken();
+            kwToken->type = ttKeywords;
+            kwToken->kw = kwEnd;
+            return kwToken;
+        }
+        else if (identifier == "writeln") {
+            KeyWordToken* kwToken = new KeyWordToken();
+            kwToken->type = ttKeywords;
+            kwToken->kw = kwWriteln;
+            return kwToken;
+        }
         IdentToken *idToken = new IdentToken();
         idToken->type = ttIdentifier;
         idToken->ident = identifier;
         return idToken;
     }
-    else if (isdigit(currentChar)) {
-        // Числовая константа - может быть целочисленной или вещественной
+    else if (isdigit(currentChar) || currentChar == '\'') { // constatnts
         string number;
         while (position < input.size() && (isdigit(input[position]) || input[position] == '.'))
             number += input[position++];
@@ -144,11 +237,21 @@ Token* getNextToken(size_t& position, const string& input) {
             realToken->data = stof(number);
             return realToken;
         }
-        else {
-            ConstToken *intToken = new ConstToken();
-            intToken->type = ttConstants;
-            intToken->data = stoi(number);
-            return intToken;
+        else if(currentChar == '\'') { // string
+            position++;
+            while (position < input.size() && input[position] != '\'')
+                number += input[position++];
+            ConstToken* stringToken = new ConstToken();
+            stringToken->type = ttConstants;
+            stringToken->data = number;
+            position++;
+            return stringToken;
+        }
+        else { 
+        ConstToken* intToken = new ConstToken();
+        intToken->type = ttConstants;
+        intToken->data = stoi(number);
+        return intToken;
         }
     }
 
