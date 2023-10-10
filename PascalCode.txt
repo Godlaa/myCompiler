@@ -1,8 +1,7 @@
-program Hello;
 begin
-writeln('Hello world');
-x := 5;
-y := 2;
-writeln(x);
-writeln(y);
+var s:string;
+s := 'wfe';
+print(s);
+x := 1.1;
+print(x);
 end.
