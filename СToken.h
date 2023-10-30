@@ -268,9 +268,7 @@ public:
             string number;
             try
             {
-                while (position < input.size() && (isdigit(input[position]) || input[position] == '.')) {
-                    if (count(number.begin(), number.end(), '.') > 1) 
-                        throw exception("Lex error in code!");
+                while (position < input.size() && (isdigit(input[position]) || input[position] == '.')) {             
                     number += input[position++];
                 }
             }
@@ -278,12 +276,23 @@ public:
             {
                 exceptions += exp.what();
                 exceptions += " Row position: " + to_string(row) + "  Position in line: " + to_string(position) + '\n';
-            }
+            }   
             if (number.find('.') != string::npos) {
-                ConstToken *realToken = new ConstToken(); // real
-                realToken->type = ttConstants;
-                realToken->data = stof(number);
-                return realToken;
+                try
+                {
+                    ConstToken* realToken = new ConstToken(); // real
+                    if (input[position] != ';' || count(number.begin(), number.end(), '.') > 1) throw exception("Lex error in code!"); 
+                    else {
+                        realToken->type = ttConstants;
+                        realToken->data = stof(number);
+                        return realToken;
+                    }
+                }
+                catch (const std::exception& exp)
+                {
+                    exceptions += exp.what();
+                    exceptions += " Row position: " + to_string(row) + "  Position in line: " + to_string(position - number.length() + 1) + '\n';
+                }
             }
             else if(currentChar == '\'') { // string
                 position++;
