@@ -2,6 +2,7 @@
 #include <string>
 #include <iostream>
 #include <variant>
+#include <fstream>
 using namespace std;
 
 enum eTokenType {
@@ -265,17 +266,18 @@ public:
             try
             {
                 while (position < input.size() && (isdigit(input[position]) || input[position] == '.')) {
-                    if (count(number.begin(), number.end(), '.') > 1) throw exception("Lex error in code!");
+                    if (count(number.begin(), number.end(), '.') > 1) 
+                        throw exception("Lex error in code!");
                     number += input[position++];
                 }
             }
             catch (const std::exception& exp)
             {
                 exceptions += exp.what();
-                exceptions += '\n';
+                exceptions += " Position in line: " + to_string(position) + '\n';
             }
             if (number.find('.') != string::npos) {
-                ConstToken *realToken = new ConstToken();
+                ConstToken *realToken = new ConstToken(); // real
                 realToken->type = ttConstants;
                 realToken->data = stof(number);
                 return realToken;
@@ -286,22 +288,23 @@ public:
                     number += input[position++];
                 try
                 {
-                    if (position == input.size() && input[position] != '\'') throw exception("Lex error in code!");
+                    if (position == input.size() && input[position] != '\'') 
+                        throw exception("Lex error in code!");
                 }
                 catch (const std::exception& exp)
                 {
                     exceptions += exp.what();
-                    exceptions += '\n';
+                    exceptions += " Position in line: " + to_string(position) + '\n';
                 }
                 
-                ConstToken* stringToken = new ConstToken();
+                ConstToken* stringToken = new ConstToken(); // string
                 stringToken->type = ttConstants;
                 stringToken->data = number;
                 position++;
                 return stringToken;
             }
             else { 
-                ConstToken* intToken = new ConstToken();
+                ConstToken* intToken = new ConstToken(); // int
                 intToken->type = ttConstants;
                 intToken->data = stoi(number);
                 return intToken;
@@ -310,5 +313,47 @@ public:
         Token* token = new Token();
         token->type = UNKNOWN;
         return token;
+    }
+};
+
+class InOutModule {
+private:
+    string line = "";
+    size_t position = 0;
+    string path;
+public:
+    InOutModule() {
+		this->path = "D:\\myCompiler\\PascalCode.txt";;
+	}
+    void ReadCode() {
+        ifstream file(path);
+        cout << "Code\n";
+        if (file.is_open())
+        {
+            while (getline(file, line))
+            {
+                cout << line;
+                cout << '\n';
+            }
+        }
+    }
+    void ReadTokens(Lexer lex) {
+        ifstream file(path);
+        cout << "\n\nTokens\n";
+        if (file.is_open())
+        {
+            while (getline(file, line))
+            {
+                while (position < line.size()) {
+                    Token* token = lex.getNextToken(position, line); // reading tokens in row
+                    token->Print();
+                    delete token;
+                }
+                cout << '\n';
+                position = 0;
+            }
+        }
+        file.close();
+        cout << lex.exceptions;
     }
 };

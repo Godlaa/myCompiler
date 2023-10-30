@@ -1,6 +1,7 @@
 begin
 var s:string;
-s := 'wfe';
+var x:real;
+s := 'wfe;
 print(s);
 x := 1.1;
 print(x);
