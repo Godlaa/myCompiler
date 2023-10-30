@@ -12,6 +12,7 @@ enum eTokenType {
     ttSpecialSymblos,  // such as  + - * / ( ) [ ] { } ...
     UNKNOWN,
 };
+
 enum eKeyWords {
     kwIf,
     kwThen,
@@ -22,6 +23,7 @@ enum eKeyWords {
     kwPrint,
     kwVar,
 };
+
 enum eSpecialSumbols {
     ssComma,
     ssDot,
@@ -33,6 +35,7 @@ enum eSpecialSumbols {
     ssColon,
 
 };
+
 enum eVariantType {
     vtInt,
     vtReal,
@@ -144,7 +147,7 @@ public:
 class Lexer {
 public:
     string exceptions = "";
-    Token* getNextToken(size_t& position, const string& input) {
+    Token* getNextToken(size_t& position, size_t& row, const string& input) {
         while (position < input.size() && isspace(input[position])) // skip space
             position++;
 
@@ -274,7 +277,7 @@ public:
             catch (const std::exception& exp)
             {
                 exceptions += exp.what();
-                exceptions += " Position in line: " + to_string(position) + '\n';
+                exceptions += " Row position: " + to_string(row) + "  Position in line: " + to_string(position) + '\n';
             }
             if (number.find('.') != string::npos) {
                 ConstToken *realToken = new ConstToken(); // real
@@ -294,7 +297,7 @@ public:
                 catch (const std::exception& exp)
                 {
                     exceptions += exp.what();
-                    exceptions += " Position in line: " + to_string(position) + '\n';
+                    exceptions += " Row position: " + to_string(row) + "  Position in line: " + to_string(position) + '\n';
                 }
                 
                 ConstToken* stringToken = new ConstToken(); // string
@@ -321,6 +324,7 @@ private:
     string line = "";
     size_t position = 0;
     string path;
+    size_t row = 1;
 public:
     InOutModule() {
 		this->path = "D:\\myCompiler\\PascalCode.txt";;
@@ -345,10 +349,11 @@ public:
             while (getline(file, line))
             {
                 while (position < line.size()) {
-                    Token* token = lex.getNextToken(position, line); // reading tokens in row
+                    Token* token = lex.getNextToken(position, row, line); // reading tokens in row
                     token->Print();
-                    delete token;
+                    delete token; 
                 }
+                row++;
                 cout << '\n';
                 position = 0;
             }
