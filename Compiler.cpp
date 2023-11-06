@@ -1,7 +1,7 @@
 #include "ÑToken.h"
 #include <fstream>
+#include "InOutModule.h"
 int main() {
-	Token* cur = nullptr;
 	Lexer lex;
 	InOutModule io;
 	io.ReadCode();
