@@ -28,25 +28,6 @@ public:
             }
         }
     }
-    void ReadTokens(Lexer lex) {
-        ifstream file(path);
-        cout << "\n\nTokens\n";
-        if (file.is_open())
-        {
-            while (getline(file, line))
-            {
-                while (position < line.size()) {
-                    shared_ptr<Token> token = lex.getNextToken(position, row, line); // reading tokens in row
-                    token->Print();
-                }
-                row++;
-                cout << '\n';
-                position = 0;
-            }
-        }
-        file.close();
-        cout << lex.exceptions;
-    }
 };
 
 

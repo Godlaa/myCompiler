@@ -4,16 +4,35 @@
 #include <fstream>
 #include "ÑToken.h"
 class Lexer {
-public:
+private:
+    size_t position;
+    size_t row;
+    ifstream file;
     string exceptions = "";
-    std::shared_ptr<Token> getNextToken(size_t& position, size_t& row, const string& input) {
-        while (position < input.size() && isspace(input[position])) // skip space
-            position++;
-
+    string input;
+    void Read_input() {
         if (position >= input.size()) {
-            shared_ptr<Token> token = make_shared<Token>();
-            token->type = UNKNOWN;
-            return token;
+            input = "";
+            getline(file, input);
+            position = 0;
+            row++;
+        }
+    }
+public:
+    Lexer() {
+        position = 0;
+        row = 1;
+        file.open("D:\\myCompiler\\PascalCode.txt");
+        getline(file, input);
+    }
+    ~Lexer() {
+        file.close();
+    }
+    std::unique_ptr<Token> getNextToken() {
+        Read_input();
+        while (position < input.size() && isspace(input[position])) position++; // skip space 
+        if (position >= input.size()) {
+            return nullptr;
         }
         char currentChar = input[position];
 
@@ -21,13 +40,13 @@ public:
             position++;
             if (position < input.size() && input[position] == '=') {
                 position++;
-                shared_ptr<SpecialSymblos> token = make_shared<SpecialSymblos>();
+                auto token = make_unique<SpecialSymblos>();
                 token->type = ttSpecialSymblos;
                 token->ss = ssAssigment;
                 return token;
             }
             else {
-                shared_ptr<SpecialSymblos> token = make_shared<SpecialSymblos>();
+                auto token = make_unique<SpecialSymblos>();
                 token->type = ttSpecialSymblos;
                 token->ss = ssColon;
                 return token;
@@ -35,49 +54,49 @@ public:
         }
         else if (currentChar == ';') {
             position++;
-            shared_ptr<SpecialSymblos> token = make_shared<SpecialSymblos>();
+            auto token = make_unique<SpecialSymblos>();
             token->type = ttSpecialSymblos;
             token->ss = ssSemicolon;
             return token;
         }
         else if (currentChar == ',') {
             position++;
-            shared_ptr<SpecialSymblos> token = make_shared<SpecialSymblos>();
+            auto token = make_unique<SpecialSymblos>();
             token->type = ttSpecialSymblos;
             token->ss = ssComma;
             return token;
         }
         else if (currentChar == '.') {
             position++;
-            shared_ptr<SpecialSymblos> token = make_shared<SpecialSymblos>();
+            auto token = make_unique<SpecialSymblos>();
             token->type = ttSpecialSymblos;
             token->ss = ssDot;
             return token;
         }
         else if (currentChar == '(') {
             position++;
-            shared_ptr<SpecialSymblos> token = make_shared<SpecialSymblos>();
+            auto token = make_unique<SpecialSymblos>();
             token->type = ttSpecialSymblos;
             token->ss = ssLeftCurveBrascet;
             return token;
         }
         else if (currentChar == ')') {
             position++;
-            shared_ptr<SpecialSymblos> token = make_shared<SpecialSymblos>();
+            auto token = make_unique<SpecialSymblos>();
             token->type = ttSpecialSymblos;
             token->ss = ssRightCurveBrascet;
             return token;
         }
         else if (currentChar == '=') {
             position++;
-            shared_ptr<SpecialSymblos> token = make_shared<SpecialSymblos>();
+            auto token = make_unique<SpecialSymblos>();
             token->type = ttSpecialSymblos;
             token->ss = ssEqual;
             return token;
         }
         else if (isalpha(currentChar)) { // kw, ident
             string identifier;
-            shared_ptr<KeyWordToken>  kwToken = make_shared<KeyWordToken>();
+            auto kwToken = make_unique<KeyWordToken>();
             kwToken->type = ttKeywords;
             while (position < input.size() && (isalpha(input[position]) || isdigit(input[position])))
                 identifier += input[position++];
@@ -118,7 +137,7 @@ public:
                 kwToken->kw = kwVar;
                 return kwToken;
             }
-            shared_ptr<IdentToken> idToken = make_shared<IdentToken>();
+            auto idToken = make_unique<IdentToken>();
             idToken->type = ttIdentifier;
             idToken->ident = identifier;
             return idToken;
@@ -139,7 +158,7 @@ public:
             if (number.find('.') != string::npos) {
                 try
                 {
-                    shared_ptr<ConstToken> realToken = make_shared<ConstToken>(); // real
+                    auto realToken = make_unique<ConstToken>(); // real
                     if (input[position] != ';' || count(number.begin(), number.end(), '.') > 1) throw exception("Lex error in code!");
                     else {
                         realToken->type = ttConstants;
@@ -168,20 +187,20 @@ public:
                     exceptions += " Row position: " + to_string(row) + "  Position in line: " + to_string(position) + '\n';
                 }
 
-                shared_ptr<ConstToken> stringToken = make_shared<ConstToken>(); // string
+                auto stringToken = make_unique<ConstToken>(); // string
                 stringToken->type = ttConstants;
                 stringToken->data = number;
                 position++;
                 return stringToken;
             }
             else {
-                shared_ptr<ConstToken>  intToken = make_shared<ConstToken>(); // int
+                auto intToken = make_unique<ConstToken>(); // int
                 intToken->type = ttConstants;
                 intToken->data = stoi(number);
                 return intToken;
             }
         }
-        shared_ptr<Token> token = make_shared<Token>();
+        auto token = make_unique<Token>();
         token->type = UNKNOWN;
         return token;
     }
