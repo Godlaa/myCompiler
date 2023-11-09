@@ -40,58 +40,86 @@ public:
             position++;
             if (position < input.size() && input[position] == '=') {
                 position++;
-                auto token = make_unique<SpecialSymblos>();
-                token->type = ttSpecialSymblos;
+                auto token = make_unique<SpecialSymbols>();
+                token->type = ttSpecialSymbols;
                 token->ss = ssAssigment;
                 return token;
             }
             else {
-                auto token = make_unique<SpecialSymblos>();
-                token->type = ttSpecialSymblos;
+                auto token = make_unique<SpecialSymbols>();
+                token->type = ttSpecialSymbols;
                 token->ss = ssColon;
                 return token;
             }
         }
         else if (currentChar == ';') {
             position++;
-            auto token = make_unique<SpecialSymblos>();
-            token->type = ttSpecialSymblos;
+            auto token = make_unique<SpecialSymbols>();
+            token->type = ttSpecialSymbols;
             token->ss = ssSemicolon;
             return token;
         }
         else if (currentChar == ',') {
             position++;
-            auto token = make_unique<SpecialSymblos>();
-            token->type = ttSpecialSymblos;
+            auto token = make_unique<SpecialSymbols>();
+            token->type = ttSpecialSymbols;
             token->ss = ssComma;
             return token;
         }
         else if (currentChar == '.') {
             position++;
-            auto token = make_unique<SpecialSymblos>();
-            token->type = ttSpecialSymblos;
+            auto token = make_unique<SpecialSymbols>();
+            token->type = ttSpecialSymbols;
             token->ss = ssDot;
             return token;
         }
         else if (currentChar == '(') {
             position++;
-            auto token = make_unique<SpecialSymblos>();
-            token->type = ttSpecialSymblos;
+            auto token = make_unique<SpecialSymbols>();
+            token->type = ttSpecialSymbols;
             token->ss = ssLeftCurveBrascet;
             return token;
         }
         else if (currentChar == ')') {
             position++;
-            auto token = make_unique<SpecialSymblos>();
-            token->type = ttSpecialSymblos;
+            auto token = make_unique<SpecialSymbols>();
+            token->type = ttSpecialSymbols;
             token->ss = ssRightCurveBrascet;
             return token;
         }
         else if (currentChar == '=') {
             position++;
-            auto token = make_unique<SpecialSymblos>();
-            token->type = ttSpecialSymblos;
+            auto token = make_unique<SpecialSymbols>();
+            token->type = ttSpecialSymbols;
             token->ss = ssEqual;
+            return token;
+        }
+        else if (currentChar == '+') {
+            position++;
+            auto token = make_unique<SpecialSymbols>();
+            token->type = ttSpecialSymbols;
+            token->ss = ssPlus;
+            return token;
+        }
+        else if (currentChar == '-') {
+            position++;
+            auto token = make_unique<SpecialSymbols>();
+            token->type = ttSpecialSymbols;
+            token->ss = ssMinus;
+            return token;
+        }
+        else if (currentChar == '*') {
+            position++;
+            auto token = make_unique<SpecialSymbols>();
+            token->type = ttSpecialSymbols;
+            token->ss = ssMult;
+            return token;
+        }
+        else if (currentChar == '/') {
+            position++;
+            auto token = make_unique<SpecialSymbols>();
+            token->type = ttSpecialSymbols;
+            token->ss = ssDiv;
             return token;
         }
         else if (isalpha(currentChar)) { // kw, ident
@@ -159,7 +187,7 @@ public:
                 try
                 {
                     auto realToken = make_unique<ConstToken>(); // real
-                    if (input[position] != ';' || count(number.begin(), number.end(), '.') > 1) throw exception("Lex error in code!");
+                    if (count(number.begin(), number.end(), '.') > 1) throw exception("Lex error in code!");
                     else {
                         realToken->type = ttConstants;
                         realToken->data = stof(number);

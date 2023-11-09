@@ -9,7 +9,7 @@ enum eTokenType {
     ttConstants, // Constants int float ...
     ttIdentifier,     // such as abc
     ttKeywords,       // such as if
-    ttSpecialSymblos,  // such as  + - * / ( ) [ ] { } ...
+    ttSpecialSymbols,  // such as  + - * / ( ) [ ] { } ...
     UNKNOWN,
 };
 
@@ -24,7 +24,7 @@ enum eKeyWords {
     kwVar,
 };
 
-enum eSpecialSumbols {
+enum eSpecialSymbols {
     ssComma,
     ssDot,
     ssRightCurveBrascet,
@@ -33,7 +33,10 @@ enum eSpecialSumbols {
     ssSemicolon,
     ssAssigment,
     ssColon,
-
+    ssPlus,
+    ssMinus,
+    ssDiv,
+    ssMult
 };
 
 enum eVariantType {
@@ -110,9 +113,9 @@ public:
     };
 };
 
-class SpecialSymblos : public Token {
+class SpecialSymbols : public Token {
 public:
-    eSpecialSumbols ss;
+    eSpecialSymbols ss;
     void Print() {
         switch (ss)
         {
@@ -139,6 +142,18 @@ public:
             break;
         case ssColon:
             cout << "ssColon" << ' ';
+            break;
+        case ssPlus:
+            cout << "ssPlus" << ' ';
+            break;
+        case ssMinus:
+            cout << "ssMinus" << ' ';
+            break;
+        case ssDiv:
+            cout << "ssDiv" << ' ';
+            break;
+        case ssMult:
+            cout << "ssMult" << ' ';
             break;
         }
     }
