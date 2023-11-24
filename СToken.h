@@ -22,6 +22,7 @@ enum eKeyWords {
     kwWriteln,
     kwPrint,
     kwVar,
+    kwReadln
 };
 
 enum eSpecialSymbols {
@@ -36,7 +37,10 @@ enum eSpecialSymbols {
     ssPlus,
     ssMinus,
     ssDiv,
-    ssMult
+    ssMult,
+    ssNoEqual,
+    ssGreater,
+    ssLesser,
 };
 
 enum eVariantType {
@@ -158,6 +162,7 @@ public:
         }
     }
 };
+
 
 
 

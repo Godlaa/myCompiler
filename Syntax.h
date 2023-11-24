@@ -18,12 +18,42 @@ private:
 	void getNext() {
 		this->curToken = this->lexer->getNextToken();
 	}
+	eSpecialSymbols get_spec() {
+		try
+		{
+			return dynamic_cast<SpecialSymbols*>(curToken.get())->ss;
+		}
+		catch (const std::exception& exp)
+		{
+			cout << exp.what();
+		}
+	}
+	eKeyWords get_keyword() {
+		try
+		{
+			return dynamic_cast<KeyWordToken*>(curToken.get())->kw;
+		}
+		catch (const std::exception& exp)
+		{
+			cout << exp.what();
+		}
+	}
+	string get_constant() {
+		try
+		{
+			return get<string>(dynamic_cast<ConstToken*>(curToken.get())->data);
+		}
+		catch (const std::exception& exp)
+		{
+			cout << exp.what();
+		}
+	}
 	bool accept(eSpecialSymbols ss)
 	{
 		// For SpecialSumbols
 		try
 		{
-			if (curToken == NULL || curToken->type != ttSpecialSymbols || dynamic_cast<SpecialSymbols*>(curToken.get())->ss != ss) throw exception("expected spec symbol op\n");
+			if (curToken == NULL || curToken->type != ttSpecialSymbols || get_spec() != ss) throw exception("expected spec symbol op\n");
 			else getNext();
 		}
 		catch (const std::exception& exp)
@@ -38,7 +68,7 @@ private:
 		// For KeyWords
 		try
 		{
-			if (curToken == NULL || curToken->type != ttKeywords || dynamic_cast<KeyWordToken*>(curToken.get())->kw != kw) throw exception("expected another key word\n");
+			if (curToken == NULL || curToken->type != ttKeywords || get_keyword() != kw) throw exception("expected another key word\n");
 			else getNext();
 		}
 		catch (const std::exception& exp)
@@ -53,7 +83,7 @@ private:
 		// For VariantType
 		try
 		{
-			if (curToken == NULL || curToken->type != ttConstants || get<string>(dynamic_cast<ConstToken*>(curToken.get())->data) != name) throw exception("expected another variant type\n");
+			if (curToken == NULL || curToken->type != ttConstants || get_constant() != name) throw exception("expected another variant type\n");
 			else getNext();
 		}
 		catch (const std::exception& exp)
@@ -112,5 +142,26 @@ private:
 	void comp_op() { // sostavnoi operator
 
 	}
+	void variable()
+	{
+		accept_ident();
+		while (accept(ssLeftCurveBrascet) || accept(ssDot))
+			switch (get_spec())
+			{
+			case ssLeftCurveBrascet:
+				getNext(); expression();
+				while (get_spec() == ssComma)
+				{
+					getNext(); expression();
+				}
+				accept(ssRightCurveBrascet);
+				break;
+			case ssDot:
+				getNext(); accept_ident();
+				break;
+			}
+	}
+	void expression() {
 
+	}
 };

@@ -1,8 +1,13 @@
-program test;
+program Evklid;
+var M, N :integer;
 begin
-var x, y: real;
-s := 'wfe';
-print(s);
-x := 1.1 + 2.2 * 2.3 / 2.5;
-print(x);
-end.z`
+writeln (' Введите M и N ' );
+readln ( M, N );
+while M <> N do
+begin
+if M > N
+then M := M - N
+else N := N - M
+end;
+print ('НОД=', M )
+end.

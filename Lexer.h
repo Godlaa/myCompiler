@@ -122,6 +122,29 @@ public:
             token->ss = ssDiv;
             return token;
         }
+        else if (currentChar == '>') {
+            position++;
+            auto token = make_unique<SpecialSymbols>();
+            token->type = ttSpecialSymbols;
+            token->ss = ssGreater;
+            return token;
+        }
+        else if (currentChar == '<') {
+            position++;
+            if (position < input.size() && input[position] == '>') {
+                position++;
+                auto token = make_unique<SpecialSymbols>();
+                token->type = ttSpecialSymbols;
+                token->ss = ssNoEqual;
+                return token;
+            }
+            else {
+                auto token = make_unique<SpecialSymbols>();
+                token->type = ttSpecialSymbols;
+                token->ss = ssLesser;
+                return token;
+            }
+        }
         else if (isalpha(currentChar)) { // kw, ident
             string identifier;
             auto kwToken = make_unique<KeyWordToken>();
