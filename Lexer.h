@@ -188,6 +188,34 @@ public:
                 kwToken->kw = kwVar;
                 return kwToken;
             }
+            else if (identifier == "else") {
+                kwToken->kw = kwElse;
+                return kwToken;
+            }
+            else if (identifier == "while") {
+                kwToken->kw = kwWhile;
+                return kwToken;
+            }
+            else if (identifier == "do") {
+                kwToken->kw = kwDo;
+                return kwToken;
+            }
+            else if (identifier == "for") {
+                kwToken->kw = kwFor;
+                return kwToken;
+            }
+            else if (identifier == "to") {
+                kwToken->kw = kwTo;
+                return kwToken;
+            }
+            else if (identifier == "downto") {
+                kwToken->kw = kwTo;
+                return kwToken;
+            }
+            else if (identifier == "until") {
+                kwToken->kw = kwUntil;
+                return kwToken;
+            }
             auto idToken = make_unique<IdentToken>();
             idToken->type = ttIdentifier;
             idToken->ident = identifier;

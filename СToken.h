@@ -22,7 +22,14 @@ enum eKeyWords {
     kwWriteln,
     kwPrint,
     kwVar,
-    kwReadln
+    kwReadln,
+    kwElse,
+    kwWhile,
+    kwDo,
+    kwFor,
+    kwTo,
+    kwToDownTo,
+    kwUntil,
 };
 
 enum eSpecialSymbols {
@@ -41,6 +48,7 @@ enum eSpecialSymbols {
     ssNoEqual,
     ssGreater,
     ssLesser,
+    ssMod,
 };
 
 enum eVariantType {
