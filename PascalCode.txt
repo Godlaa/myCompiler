@@ -9,5 +9,4 @@ if M > N
 then M := M - N
 else N := N - M
 end;
-print ('мнд=', M )
 end.

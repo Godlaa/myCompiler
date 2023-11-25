@@ -48,7 +48,7 @@ private:
 			cout << exp.what();
 		}
 	}
-	bool accept(eSpecialSymbols ss)
+	void accept(eSpecialSymbols ss)
 	{
 		// For SpecialSumbols
 		try
@@ -59,11 +59,9 @@ private:
 		catch (const std::exception& exp)
 		{
 			cout << exp.what();
-			return false;
 		}
-		return true;
 	}
-	bool accept(eKeyWords kw)
+	void accept(eKeyWords kw)
 	{
 		// For KeyWords
 		try
@@ -74,11 +72,9 @@ private:
 		catch (const std::exception& exp)
 		{
 			cout << exp.what();
-			return false;
 		}
-		return true;
 	}
-	bool accept(string name)
+	void accept(string name)
 	{
 		// For VariantType
 		try
@@ -89,11 +85,10 @@ private:
 		catch (const std::exception& exp)
 		{
 			cout << exp.what();
-			return false;
 		}
-		return true;
 	}
-	bool accept_ident() { // name
+	void accept_ident()  // ident 
+	{
 		try
 		{
 			if (curToken == NULL || curToken ->type != ttIdentifier) throw exception("ident exp");
@@ -102,9 +97,7 @@ private:
 		catch (const std::exception&)
 		{
 			throw exception("ident");
-			return false;
 		}
-		return true;
 	}
 	void program() {
 		getNext();
@@ -147,7 +140,7 @@ private:
 	void compoundstatement() /* анализ конструкции <составной оператор> */
 	{ 
 		accept(kwBegin); statement();
-		while (get_spec() == ssSemicolon)
+		while (curToken->type == ttSpecialSymbols && get_spec() == ssSemicolon)
 		{
 			accept(ssSemicolon); statement();
 		}
@@ -183,7 +176,7 @@ private:
 	{
 		accept(kwIf); expression();
 		accept(kwThen); statement();
-		if (get_keyword() == kwElse)
+		if (curToken->type == ttKeywords && get_keyword() == kwElse)
 		{
 			accept(kwElse);
 			statement();
@@ -193,9 +186,12 @@ private:
 	{
 		accept(kwFor); accept_ident();
 		accept(ssAssigment); expression();
-		if (get_keyword() == kwTo || get_keyword() == kwToDownTo) getNext();
-		expression(); accept(kwDo);
-		statement();
+		if (curToken->type == ttKeywords && get_keyword() == kwTo || get_keyword() == kwToDownTo) 
+		{
+			getNext();
+			expression(); accept(kwDo);
+			statement();
+		}
 	}
 	void statement() /* анализ конструкции <оператор> */	
 	{
@@ -216,7 +212,9 @@ private:
 			case kwFor:
 				forstatement(); break;
 			case kwEnd:
+				break;
 			case kwUntil:
+				break;
 			case kwElse: break; /* в случае пустого оператора */
 			}
 			break;
@@ -232,15 +230,15 @@ private:
 	{
 		eSpecialSymbols oper;
 		simple_expression();
-		if (realation_operator()) {
+		if (curToken->type == ttSpecialSymbols && realation_operator())
+		{
 			simple_expression();
 		}
-
 	}
 	void simple_expression() 
 	{
 		term();
-		while (additive_op())
+		while (curToken->type == ttSpecialSymbols && additive_op())
 		{
 			term();
 		}
@@ -248,9 +246,12 @@ private:
 	void term() // slogaemoe
 	{
 		factor();
-		while (mult_op())
+		if (curToken -> type == ttSpecialSymbols)
 		{
-			factor();
+			while (mult_op())
+			{
+				factor();
+			}
 		}
 	}
 	void factor() // mnozitel
@@ -265,6 +266,9 @@ private:
 		{
 			switch (curToken->type) {
 			case ttConstants:
+				getNext(); // ПОЛУЧИЛИ Константу 
+				break;
+			case ttIdentifier:
 				getNext(); // ПОЛУЧИЛИ ПЕРЕМЕННУЮ ТИПО ПРОСТО 5 ИЛИ 'СТРОКА' И ЧЕ С ЭТИМ ДЕЛАТЬ
 				break;
 			}
