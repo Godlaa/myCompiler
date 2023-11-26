@@ -4,6 +4,7 @@
 #include <fstream>
 #include "СToken.h"
 #include <map>
+#include <vector>
 class Syntax
 {
 public:
@@ -14,7 +15,7 @@ public:
 private:
 	shared_ptr<Token> curToken;
 	shared_ptr<Lexer> lexer;
-
+	std::vector<eKeyWords> starters_begpart = { kwVar, kwBegin };
 	void getNext() {
 		this->curToken = this->lexer->getNextToken();
 	}
@@ -99,18 +100,57 @@ private:
 			throw exception("ident");
 		}
 	}
+	bool belong(vector<eKeyWords> starters)
+	{
+		for (const auto& starter : starters) {
+			if (curToken->type == ttKeywords && get_keyword() == starter) {
+				return true;
+			}
+		}
+		return false;
+	}
+	void skipto(std::vector<eKeyWords> starters, std::vector<eKeyWords> followers) 
+	{
+		while (!belong(followers))
+		{
+			getNext();
+		}
+	}
+	std::vector<eKeyWords> set_disjunct(std::vector<eKeyWords> starters, std::vector<eKeyWords> followers)
+	{
+		std::vector<eKeyWords> new_vec;
+		for (const auto& starter : starters) 
+		{
+			new_vec.push_back(starter);
+		}
+		for (const auto& follower : followers)
+		{
+			new_vec.push_back(follower);
+		}
+		return new_vec;
+	}
 	void program() {
+		std::vector<eKeyWords> followers = { };
 		getNext();
 		accept(kwProgram);
 		accept_ident();
 		accept(ssSemicolon);
-		block();
+		block(followers);
 		accept(ssDot);
 	}
-	void block()  // block
+	void block(std::vector<eKeyWords> followers)  // block
 	{
-		var_block();
-		op_block();
+		if (!belong(starters_begpart) )
+		{
+			cout << " ошибка в разделе описаний "; /* ошибка в разделе описаний */
+			skipto(starters_begpart, followers);
+		}
+		if (belong(starters_begpart))
+		{
+			var_block();
+			op_block(set_disjunct(starters_begpart, followers));
+		}
+		
 	}
 	void var_block() /* анализ конструкции <раздел переменных> */
 	{ 
@@ -133,23 +173,27 @@ private:
 	{ 
 		accept_ident();
 	}
- 	void op_block() 
+ 	void op_block(std::vector<eKeyWords> followers)
 	{
-		compoundstatement();
+		compoundstatement(followers);
 	}
-	void compoundstatement() /* анализ конструкции <составной оператор> */
+	void compoundstatement(std::vector<eKeyWords> followers) /* анализ конструкции <составной оператор> */
 	{ 
-		accept(kwBegin); statement();
+		accept(kwBegin); 
+		statement(followers);
 		while (curToken->type == ttSpecialSymbols && get_spec() == ssSemicolon)
 		{
-			accept(ssSemicolon); statement();
+			accept(ssSemicolon); 
+			statement(followers);
 		}
 		accept(kwEnd);
 	}
-	void whilestatement() /* анализ конструкции <цикл с предусловием> */	
+	void whilestatement(std::vector<eKeyWords> followers) /* анализ конструкции <цикл с предусловием> */
 	{
-		accept(kwWhile); expression();
-		accept(kwDo); statement();
+		accept(kwWhile); 
+		expression();
+		accept(kwDo); 
+		statement(followers);
 	}
 	void variable() /* анализ конструкции <переменная> */
 	{
@@ -159,41 +203,49 @@ private:
 			switch (get_spec())
 			{
 			case ssLeftCurveBrascet:
-				accept(ssLeftCurveBrascet); expression();
+				accept(ssLeftCurveBrascet); 
+				expression();
 				while (get_spec() == ssComma)
 				{
-					accept(ssComma); expression();
+					accept(ssComma); 
+					expression();
 				}
 				accept(ssRightCurveBrascet);
 				break;
 			case ssDot:
-				accept(ssDot); accept_ident();
+				accept(ssDot);
+				accept_ident();
 				break;
 			}
 		}
 	}
-	void ifstatement() /* анализ конструкции <условный оператор> */
+	void ifstatement(std::vector<eKeyWords> followers) /* анализ конструкции <условный оператор> */
 	{
-		accept(kwIf); expression();
-		accept(kwThen); statement();
+		accept(kwIf);
+		expression();
+		accept(kwThen); 
+		statement(followers);
 		if (curToken->type == ttKeywords && get_keyword() == kwElse)
 		{
 			accept(kwElse);
-			statement();
+			statement(followers);
 		}
 	}
-	void forstatement() /* анализ конструкции <цикл с параметром> */
+	void forstatement(std::vector<eKeyWords> followers) /* анализ конструкции <цикл с параметром> */
 	{
-		accept(kwFor); accept_ident();
-		accept(ssAssigment); expression();
+		accept(kwFor); 
+		accept_ident();
+		accept(ssAssigment);
+		expression();
 		if (curToken->type == ttKeywords && get_keyword() == kwTo || get_keyword() == kwToDownTo) 
 		{
 			getNext();
-			expression(); accept(kwDo);
-			statement();
+			expression(); 
+			accept(kwDo);
+			statement(followers);
 		}
 	}
-	void statement() /* анализ конструкции <оператор> */	
+	void statement(std::vector<eKeyWords> followers) /* анализ конструкции <оператор> */
 	{
 		switch (curToken -> type)
 		{
@@ -204,13 +256,13 @@ private:
 			switch (get_keyword())
 			{
 			case kwBegin:
-				compoundstatement(); break;
+				compoundstatement(followers); break;
 			case kwIf:
-				ifstatement(); break;
+				ifstatement(followers); break;
 			case kwWhile:
-				whilestatement(); break;
+				whilestatement(followers); break;
 			case kwFor:
-				forstatement(); break;
+				forstatement(followers); break;
 			case kwEnd:
 				break;
 			case kwUntil:
