@@ -4,7 +4,7 @@
 #include <fstream>
 #include "СToken.h"
 #include <map>
-#include <vector>
+#include <unordered_set>
 class Syntax
 {
 public:
@@ -15,7 +15,21 @@ public:
 private:
 	shared_ptr<Token> curToken;
 	shared_ptr<Lexer> lexer;
-	std::vector<eKeyWords> starters_begpart = { kwVar, kwBegin };
+	unordered_set<eKeyWords> st_block = { kwBegin, kwVar };
+	unordered_set<eKeyWords> st_var = { kwBegin, kwVar };
+	unordered_set<eSpecialSymbols> after_var = { ssSemicolon };
+	unordered_set<eTokenType> id_starters = { ttIdentifier };
+	void error(int index) {
+		switch (index)
+		{
+		case 1:
+			cout << "ошибка в разделе описаний\n"; /* ошибка в разделе описаний */
+			break;
+		default:
+			cout << "XZ\n";
+			break;
+		}
+	}
 	void getNext() {
 		this->curToken = this->lexer->getNextToken();
 	}
@@ -93,44 +107,52 @@ private:
 		try
 		{
 			if (curToken == NULL || curToken ->type != ttIdentifier) throw exception("ident exp");
-			else curToken = lexer->getNextToken();
+			else getNext();
 		}
 		catch (const std::exception&)
 		{
-			throw exception("ident");
+			cout << "exception ident";
+			getNext();
 		}
 	}
-	bool belong(vector<eKeyWords> starters)
+	bool belong(unordered_set<eKeyWords> starters)
 	{
 		for (const auto& starter : starters) {
-			if (curToken->type == ttKeywords && get_keyword() == starter) {
+			if (curToken != NULL && curToken->type == ttKeywords && get_keyword() == starter) {
 				return true;
 			}
 		}
 		return false;
 	}
-	void skipto(std::vector<eKeyWords> starters, std::vector<eKeyWords> followers) 
+	void skipto2(unordered_set<eKeyWords> starters, std::unordered_set<eKeyWords> followers)
+	{
+		while (!belong(starters) && !belong(followers))
+		{
+			getNext();
+		}
+	}
+	void skipto(unordered_set<eKeyWords> followers)
 	{
 		while (!belong(followers))
 		{
 			getNext();
 		}
 	}
-	std::vector<eKeyWords> set_disjunct(std::vector<eKeyWords> starters, std::vector<eKeyWords> followers)
+	unordered_set<eKeyWords> set_disjunct(unordered_set<eKeyWords> starters, unordered_set<eKeyWords> followers)
 	{
-		std::vector<eKeyWords> new_vec;
+		unordered_set<eKeyWords>new_vec;
 		for (const auto& starter : starters) 
 		{
-			new_vec.push_back(starter);
+			new_vec.insert(starter);
 		}
 		for (const auto& follower : followers)
 		{
-			new_vec.push_back(follower);
+			new_vec.insert(follower);
 		}
 		return new_vec;
 	}
 	void program() {
-		std::vector<eKeyWords> followers = { };
+		unordered_set<eKeyWords>followers = { };
 		getNext();
 		accept(kwProgram);
 		accept_ident();
@@ -138,27 +160,27 @@ private:
 		block(followers);
 		accept(ssDot);
 	}
-	void block(std::vector<eKeyWords> followers)  // block
+	void block(unordered_set<eKeyWords> followers)  // block
 	{
-		if (!belong(starters_begpart) )
-		{
-			cout << " ошибка в разделе описаний "; /* ошибка в разделе описаний */
-			skipto(starters_begpart, followers);
-		}
-		if (belong(starters_begpart))
-		{
-			var_block();
-			op_block(set_disjunct(starters_begpart, followers));
-		}
+		var_block(followers);
+		op_block(followers);
 		
 	}
-	void var_block() /* анализ конструкции <раздел переменных> */
+	void var_block(unordered_set<eKeyWords> followers) /* анализ конструкции <раздел переменных> */
 	{ 
-		accept(kwVar);
-		same_var();
-		accept(ssSemicolon);
+		if (!belong(st_var))
+		{
+			error(1);
+			skipto2(st_var, followers);
+		}
+		if (curToken ->	type == ttKeywords && get_keyword() == kwVar && belong(st_var))
+		{
+			accept(kwVar);
+			same_var(followers);
+			accept(ssSemicolon);
+		}
 	}
-	void same_var() /* анализ конструкции <описание однотипных переменных> */
+	void same_var(unordered_set<eKeyWords>followers) /* анализ конструкции <описание однотипных переменных> */
 	{ 
 		accept_ident();
 		while (get_spec() == ssComma)
@@ -167,17 +189,17 @@ private:
 			accept_ident();
 		}
 		accept(ssColon);
-		type();
+		type(followers);
 	}
-	void type() 
+	void type(unordered_set<eKeyWords>followers)
 	{ 
 		accept_ident();
 	}
- 	void op_block(std::vector<eKeyWords> followers)
+ 	void op_block(unordered_set<eKeyWords>followers)
 	{
 		compoundstatement(followers);
 	}
-	void compoundstatement(std::vector<eKeyWords> followers) /* анализ конструкции <составной оператор> */
+	void compoundstatement(unordered_set<eKeyWords>followers) /* анализ конструкции <составной оператор> */
 	{ 
 		accept(kwBegin); 
 		statement(followers);
@@ -188,7 +210,7 @@ private:
 		}
 		accept(kwEnd);
 	}
-	void whilestatement(std::vector<eKeyWords> followers) /* анализ конструкции <цикл с предусловием> */
+	void whilestatement(unordered_set<eKeyWords>followers) /* анализ конструкции <цикл с предусловием> */
 	{
 		accept(kwWhile); 
 		expression();
@@ -219,7 +241,7 @@ private:
 			}
 		}
 	}
-	void ifstatement(std::vector<eKeyWords> followers) /* анализ конструкции <условный оператор> */
+	void ifstatement(unordered_set<eKeyWords>followers) /* анализ конструкции <условный оператор> */
 	{
 		accept(kwIf);
 		expression();
@@ -231,7 +253,7 @@ private:
 			statement(followers);
 		}
 	}
-	void forstatement(std::vector<eKeyWords> followers) /* анализ конструкции <цикл с параметром> */
+	void forstatement(unordered_set<eKeyWords>followers) /* анализ конструкции <цикл с параметром> */
 	{
 		accept(kwFor); 
 		accept_ident();
@@ -245,7 +267,7 @@ private:
 			statement(followers);
 		}
 	}
-	void statement(std::vector<eKeyWords> followers) /* анализ конструкции <оператор> */
+	void statement(unordered_set<eKeyWords>followers) /* анализ конструкции <оператор> */
 	{
 		switch (curToken -> type)
 		{
