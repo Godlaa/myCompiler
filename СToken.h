@@ -55,7 +55,8 @@ enum eVariantType {
     vtInt,
     vtReal,
     vtString,
-    vtBool
+    vtBool,
+    None
 };
 
 class Token {

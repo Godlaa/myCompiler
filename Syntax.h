@@ -5,6 +5,9 @@
 #include "СToken.h"
 #include <map>
 #include <unordered_set>
+#define type_flwr  vector<variant<eSpecialSymbols, eKeyWords>>
+#define kw_check curToken -> type == ttKeywords && get_keyword()
+#define spec_check curToken -> type == ttSpecialSymbols && get_spec()
 class Syntax
 {
 public:
@@ -15,6 +18,8 @@ public:
 private:
 	shared_ptr<Token> curToken;
 	shared_ptr<Lexer> lexer;
+	typedef map<string, eVariantType> var;
+	var variables;
 	// хватит ловить в try catch и например скипать до [then else] в блоке if 
 	void getNext() 
 	{
@@ -50,6 +55,17 @@ private:
 			cout << exp.what();
 		}
 	}
+	string get_ident() 
+	{
+		try
+		{
+			return (dynamic_cast<IdentToken*>(curToken.get())->ident);
+		}
+		catch (const std::exception& exp)
+		{
+			cout << exp.what();
+		}
+	}
 	void accept(eSpecialSymbols ss)
 	{
 		if (curToken == NULL || curToken->type != ttSpecialSymbols || get_spec() != ss) throw exception("expected spec symbol op\n");
@@ -75,7 +91,7 @@ private:
 		if (curToken == NULL || curToken ->type != ttIdentifier) throw exception("ident exp");
 		else getNext();
 	}
-	bool belong(vector<variant<eSpecialSymbols, eKeyWords>> starters) {
+	bool belong(type_flwr starters) {
 		for (const auto& starter : starters) 
 		{
 			if (curToken && (curToken->type == ttSpecialSymbols && holds_alternative<eSpecialSymbols>(starter) && get_spec() == get<eSpecialSymbols>(starter)) || (curToken->type == ttKeywords && holds_alternative<eKeyWords>(starter) && get_keyword() == get<eKeyWords>(starter))) 
@@ -85,11 +101,32 @@ private:
 		}
 		return false;
 	}
-	void skipto(vector<variant<eSpecialSymbols, eKeyWords>> starters)
+	void skipto(type_flwr starters)
 	{
 		while (curToken && !belong(starters))
 		{
 			getNext();
+		}
+	}
+	void check_variables() 
+	{
+		if (curToken == NULL || curToken->type != ttIdentifier) throw exception("ident exp");
+		else variables.insert(var :: value_type(get_ident(), None));
+	}
+	void check_type()
+	{
+		eVariantType type;
+		if (curToken == NULL || curToken->type != ttIdentifier) throw exception("ident exp");
+		else 
+		{
+			if (get_ident() == "integer") type = vtInt;
+			else if (get_ident() == "bool")  type = vtBool;
+			else if (get_ident() == "string")  type = vtString;
+			else if (get_ident() == "real")  type = vtReal;
+			for (auto& var : variables)
+			{
+				if (var.second == None) var.second = type;
+			}
 		}
 	}
 	void program() {
@@ -112,22 +149,29 @@ private:
 			var_block();
 			op_block();
 		}
-		catch (const std::exception& exp) { skipto(vector<variant<eSpecialSymbols, eKeyWords>> { kwVar, kwBegin }); cout << exp.what(); }
+		catch (const std::exception& exp) { skipto(type_flwr { kwVar, kwBegin }); cout << exp.what(); }
 	}
 	void var_block() /* анализ конструкции <раздел переменных> */
 	{ 
 		try
 		{
-			accept(kwVar);
-			do
+			if (kw_check == kwVar)
 			{
-				same_var();
-				accept(ssSemicolon);
-			} while (curToken->type == ttIdentifier);
+				accept(kwVar);
+				do
+				{
+					same_var();
+					accept(ssSemicolon);
+				} while (curToken->type == ttIdentifier);
+			}
+			else
+			{
+				skipto(type_flwr{ kwBegin });
+			}
 		}
 		catch (const std::exception& exp)
 		{
-			skipto(vector<variant<eSpecialSymbols, eKeyWords>> { kwBegin }); cout << exp.what();
+			skipto(type_flwr{ kwBegin }); cout << exp.what();
 		}
 
 	}
@@ -135,10 +179,12 @@ private:
 	{ 
 		try
 			{
+			check_variables();
 			accept_ident();
-			while (curToken -> type == ttSpecialSymbols && get_spec() == ssComma)
+			while (spec_check == ssComma)
 			{
 				accept(ssComma);
+				check_variables();
 				accept_ident();
 			}
 			accept(ssColon);
@@ -146,11 +192,12 @@ private:
 		}
 		catch (const std::exception& exp)
 		{
-			skipto(vector<variant<eSpecialSymbols, eKeyWords>> { ssSemicolon, kwBegin }); cout << exp.what();
+			skipto(type_flwr{ ssSemicolon, kwBegin }); cout << exp.what();
 		}
 	}
 	void type()
 	{ 
+		check_type();
 		accept_ident();
 	}
  	void op_block()
@@ -172,7 +219,7 @@ private:
 		}
 		catch (const std::exception& exp)
 		{
-			skipto(vector<variant<eSpecialSymbols, eKeyWords>> { ssDot }); cout << exp.what();
+			skipto(type_flwr{ ssDot }); cout << exp.what();
 		}
 	}
 	void whilestatement() /* анализ конструкции <цикл с предусловием> */
@@ -193,7 +240,7 @@ private:
 		}
 		catch (const std::exception& exp)
 		{
-			skipto(vector<variant<eSpecialSymbols, eKeyWords>> { kwWhile, kwFor, kwIf }); cout << exp.what();
+			skipto(type_flwr { kwWhile, kwFor, kwIf }); cout << exp.what();
 		}
 	}
 	void variable() /* анализ конструкции <переменная> */
@@ -227,7 +274,7 @@ private:
 		}
 		catch (const std::exception& exp)
 		{
-			skipto(vector<variant<eSpecialSymbols, eKeyWords>> { ssAssigment, kwElse }); cout << exp.what();
+			skipto(type_flwr{ ssAssigment, kwElse }); cout << exp.what();
 		}
 	}
 	void ifstatement() /* анализ конструкции <условный оператор> */
@@ -241,7 +288,7 @@ private:
 		}
 		catch (const std::exception& exp)
 		{
-			skipto(vector<variant<eSpecialSymbols, eKeyWords>> { kwElse }); cout << exp.what();
+			skipto(type_flwr { kwElse }); cout << exp.what();
 		}
 		try
 		{
@@ -253,7 +300,7 @@ private:
 		}
 		catch (const std::exception& exp)
 		{
-			skipto(vector<variant<eSpecialSymbols, eKeyWords>> { kwEnd }); cout << exp.what();
+			skipto(type_flwr{ kwEnd }); cout << exp.what();
 		}
 	}
 	void forstatement() /* анализ конструкции <цикл с параметром> */
@@ -274,7 +321,7 @@ private:
 		}
 		catch (const std::exception& exp)
 		{
-			skipto(vector<variant<eSpecialSymbols, eKeyWords>> { kwEnd }); cout << exp.what();
+			skipto(type_flwr { kwEnd }); cout << exp.what();
 		}
 	}
 	void statement() /* анализ конструкции <оператор> */
@@ -308,7 +355,7 @@ private:
 		}
 		catch (const std::exception& exp)
 		{
-			skipto(vector<variant<eSpecialSymbols, eKeyWords>> { kwEnd });
+			skipto(type_flwr { kwEnd });
 			cout << exp.what();
 		}
 	}
@@ -322,7 +369,7 @@ private:
 		}
 		catch (const std::exception& exp)
 		{
-			skipto(vector<variant<eSpecialSymbols, eKeyWords>> { ssSemicolon });
+			skipto(type_flwr { ssSemicolon });
 			cout << exp.what();
 		}
 	}
@@ -416,21 +463,21 @@ private:
 		{
 		case ssEqual:
 			accept(ssEqual);
-			return 1;
+			return true;
 			break;
 		case ssNoEqual:
 			accept(ssNoEqual);
-			return 1;
+			return true;
 			break;
 		case ssGreater:
 			accept(ssGreater);
-			return 1;
+			return true;
 			break;
 		case ssLesser:
 			accept(ssLesser);
-			return 1;
+			return true;
 			break;
 		}
-		return 0;
+		return false;
 	}
 };
