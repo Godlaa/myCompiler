@@ -5,9 +5,12 @@
 #include "СToken.h"
 #include <map>
 #include <unordered_set>
-#define type_flwr  vector<variant<eSpecialSymbols, eKeyWords>>
+#include "Errors.h"
+
+#define starters_type  vector<variant<eSpecialSymbols, eKeyWords>>
 #define kw_check curToken -> type == ttKeywords && get_keyword()
 #define spec_check curToken -> type == ttSpecialSymbols && get_spec()
+
 class Syntax
 {
 public:
@@ -24,6 +27,14 @@ private:
 	void getNext() 
 	{
 		this->curToken = this->lexer->getNextToken();
+	}
+	void compatible_to() // приведение типов функция compatible to
+	{
+
+	}
+	void exist_op() // возможна ли операция между переменными 
+	{
+
 	}
 	eSpecialSymbols get_spec() {
 		try
@@ -68,30 +79,25 @@ private:
 	}
 	void accept(eSpecialSymbols ss)
 	{
-		if (curToken == NULL || curToken->type != ttSpecialSymbols || get_spec() != ss) throw exception("expected spec symbol op\n");
+		if (curToken == NULL || curToken->type != ttSpecialSymbols || get_spec() != ss) throw exception(spec_symbol_err);
 		else getNext();
 	}
-	void accept(eKeyWords kw)
+	void accept(eKeyWords kw) 
 	{
-		if (curToken == NULL || curToken->type != ttKeywords || get_keyword() != kw) throw exception("expected another key word\n");
-		else getNext();
-	}
-	void accept(string name)
-	{
-		if (curToken == NULL || curToken->type != ttConstants || get_constant() != name) throw exception("expected another variant type\n");
+		if (curToken == NULL || curToken->type != ttKeywords || get_keyword() != kw) throw exception(keyword_err);
 		else getNext();
 	}
 	void accept(eTokenType tt)
 	{
-		if (curToken == NULL || tt != curToken -> type) throw exception("expected another type\n");
+		if (curToken == NULL || tt != curToken -> type) throw exception(token_type_err);
 		else getNext();
 	}
 	void accept_ident()  // ident 
 	{
-		if (curToken == NULL || curToken ->type != ttIdentifier) throw exception("ident exp");
+		if (curToken == NULL || curToken ->type != ttIdentifier) throw exception(ident_err);
 		else getNext();
 	}
-	bool belong(type_flwr starters) {
+	bool belong(starters_type starters) {
 		for (const auto& starter : starters) 
 		{
 			if (curToken && (curToken->type == ttSpecialSymbols && holds_alternative<eSpecialSymbols>(starter) && get_spec() == get<eSpecialSymbols>(starter)) || (curToken->type == ttKeywords && holds_alternative<eKeyWords>(starter) && get_keyword() == get<eKeyWords>(starter))) 
@@ -101,7 +107,7 @@ private:
 		}
 		return false;
 	}
-	void skipto(type_flwr starters)
+	void skipto(starters_type starters)
 	{
 		while (curToken && !belong(starters))
 		{
@@ -110,19 +116,20 @@ private:
 	}
 	void check_variables() 
 	{
-		if (curToken == NULL || curToken->type != ttIdentifier) throw exception("ident exp");
-		else variables.insert(var :: value_type(get_ident(), None));
+		if (curToken == NULL || curToken->type != ttIdentifier) throw exception(ident_err);
+		else variables.insert(var :: value_type(get_ident(), None)); // map <string, CType> при разборе var - 's' , string
 	}
 	void check_type()
 	{
 		eVariantType type;
-		if (curToken == NULL || curToken->type != ttIdentifier) throw exception("ident exp");
+		if (curToken == NULL || curToken->type != ttIdentifier) throw exception(ident_err);
 		else 
 		{
 			if (get_ident() == "integer") type = vtInt;
 			else if (get_ident() == "bool")  type = vtBool;
 			else if (get_ident() == "string")  type = vtString;
 			else if (get_ident() == "real")  type = vtReal;
+			else throw exception("unknown type");
 			for (auto& var : variables)
 			{
 				if (var.second == None) var.second = type;
@@ -149,7 +156,7 @@ private:
 			var_block();
 			op_block();
 		}
-		catch (const std::exception& exp) { skipto(type_flwr { kwVar, kwBegin }); cout << exp.what(); }
+		catch (const std::exception& exp) { skipto(starters_type { kwVar, kwBegin }); cout << exp.what(); }
 	}
 	void var_block() /* анализ конструкции <раздел переменных> */
 	{ 
@@ -166,12 +173,12 @@ private:
 			}
 			else
 			{
-				skipto(type_flwr{ kwBegin });
+				skipto(starters_type{ kwBegin });
 			}
 		}
 		catch (const std::exception& exp)
 		{
-			skipto(type_flwr{ kwBegin }); cout << exp.what();
+			skipto(starters_type{ kwBegin }); cout << exp.what();
 		}
 
 	}
@@ -192,7 +199,7 @@ private:
 		}
 		catch (const std::exception& exp)
 		{
-			skipto(type_flwr{ ssSemicolon, kwBegin }); cout << exp.what();
+			skipto(starters_type{ ssSemicolon, kwBegin }); cout << exp.what();
 		}
 	}
 	void type()
@@ -219,7 +226,7 @@ private:
 		}
 		catch (const std::exception& exp)
 		{
-			skipto(type_flwr{ ssDot }); cout << exp.what();
+			skipto(starters_type{ ssDot }); cout << exp.what();
 		}
 	}
 	void whilestatement() /* анализ конструкции <цикл с предусловием> */
@@ -240,7 +247,7 @@ private:
 		}
 		catch (const std::exception& exp)
 		{
-			skipto(type_flwr { kwWhile, kwFor, kwIf }); cout << exp.what();
+			skipto(starters_type { kwWhile, kwFor, kwIf }); cout << exp.what();
 		}
 	}
 	void variable() /* анализ конструкции <переменная> */
@@ -274,7 +281,7 @@ private:
 		}
 		catch (const std::exception& exp)
 		{
-			skipto(type_flwr{ ssAssigment, kwElse }); cout << exp.what();
+			skipto(starters_type{ ssAssigment, kwElse }); cout << exp.what();
 		}
 	}
 	void ifstatement() /* анализ конструкции <условный оператор> */
@@ -288,7 +295,7 @@ private:
 		}
 		catch (const std::exception& exp)
 		{
-			skipto(type_flwr { kwElse }); cout << exp.what();
+			skipto(starters_type { kwElse }); cout << exp.what();
 		}
 		try
 		{
@@ -300,7 +307,7 @@ private:
 		}
 		catch (const std::exception& exp)
 		{
-			skipto(type_flwr{ kwEnd }); cout << exp.what();
+			skipto(starters_type{ kwEnd }); cout << exp.what();
 		}
 	}
 	void forstatement() /* анализ конструкции <цикл с параметром> */
@@ -321,7 +328,7 @@ private:
 		}
 		catch (const std::exception& exp)
 		{
-			skipto(type_flwr { kwEnd }); cout << exp.what();
+			skipto(starters_type { kwEnd }); cout << exp.what();
 		}
 	}
 	void statement() /* анализ конструкции <оператор> */
@@ -355,7 +362,7 @@ private:
 		}
 		catch (const std::exception& exp)
 		{
-			skipto(type_flwr { kwEnd });
+			skipto(starters_type { kwEnd });
 			cout << exp.what();
 		}
 	}
@@ -369,7 +376,7 @@ private:
 		}
 		catch (const std::exception& exp)
 		{
-			skipto(type_flwr { ssSemicolon });
+			skipto(starters_type { ssSemicolon });
 			cout << exp.what();
 		}
 	}
@@ -407,9 +414,6 @@ private:
 			accept(ssLeftCurveBrascet);
 			expression();
 			accept(ssRightCurveBrascet);
-			// map <string, CType> при разборе var - 's' , string
-			// приведение типов функция compatible to
-			// функция op возможна ли операция между переменными
 		}
 		else
 		{

@@ -8,6 +8,7 @@ int main() {
 	shared_ptr<Syntax> syntax = make_shared<Syntax>(lexer);
 	std ::shared_ptr<Token> token = nullptr;
 	syntax->run_syntax();
+	lexer->print_lex_errors();
 
 	return 0;
 }

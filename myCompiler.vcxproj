@@ -134,6 +134,7 @@
     <Text Include="PascalCode.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Errors.h" />
     <ClInclude Include="InOutModule.h" />
     <ClInclude Include="Lexer.h" />
     <ClInclude Include="Syntax.h" />

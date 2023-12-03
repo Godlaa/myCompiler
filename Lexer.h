@@ -28,6 +28,13 @@ public:
     ~Lexer() {
         file.close();
     }
+    void print_lex_errors() {
+        cout << exceptions;
+    }
+    pair<int, int> get_token_cords() 
+    {
+        return pair<int, int>(row, position);
+    }
     std::unique_ptr<Token> getNextToken() {
         Read_input();
         while (position < input.size() && isspace(input[position])) position++; // skip space 
