@@ -28,13 +28,82 @@ private:
 	{
 		this->curToken = this->lexer->getNextToken();
 	}
-	void compatible_to() // приведение типов функция compatible to
+	bool compatible_to(eVariantType type1, eVariantType type2) // приведение типов функция compatible to
 	{
-
+		if (type1 == type2) {
+			return true;
+		}
+		else if (type1 == vtInt && type2 == vtReal) {
+			return true;
+		}
+		else if (type1 == vtReal && type2 == vtReal) {
+			return true;
+		}
+		return false;
 	}
-	void exist_op() // возможна ли операция между переменными 
+	eVariantType exist_op(eVariantType type1, eVariantType type2, eSpecialSymbols operation) // возможна ли операция между переменными 
 	{
+		switch (operation)
+		{
+		case ssEqual:
+		case ssNoEqual:
+			if (type1 == type2) {
+				return vtBool; 
+			}
+			else {
+				return None; 
+			}
+			break;
 
+		case eSpecialSymbols::ssPlus:
+		case eSpecialSymbols::ssMinus:
+		case eSpecialSymbols::ssMult:
+			if (type1 == vtInt && type2 == vtInt) {
+				return vtInt; 
+			}
+			else if ((type1 == vtReal || type1 == vtInt) &&
+				(type2 == vtReal || type2 == vtInt)) {
+				return vtReal;
+			}
+			return None; 
+
+		case eSpecialSymbols::ssDiv:
+			if ((type1 == vtReal || type1 == vtInt) &&
+				(type2 == vtReal || type2 == vtInt)) {
+				return vtReal; 
+			}
+			return None;
+
+		case eSpecialSymbols::ssMod:
+			if (type1 == vtInt && type2 == vtInt) {
+				return vtInt; 
+			}
+			return None;
+
+		case eSpecialSymbols::ssGreater:
+		case eSpecialSymbols::ssLesser:
+			if ((type1 == vtReal || type1 == vtInt) &&
+				(type2 == vtReal || type2 == vtInt)) {
+				return vtBool;
+			}
+			else if (type1 == vtString && type2 == vtString) {
+				return vtBool; 
+			}
+			return None; 
+
+		default:
+			return None;
+		}
+	}
+	eVariantType exist_op(eVariantType type1, eVariantType type2, eKeyWords op) // возможна ли операция между переменными 
+	{
+		// Логические операции для типа bool
+		if ((op == kwAnd || op == kwOr|| op == kwNot) &&
+			(type1 == vtBool && type2 == vtBool)) {
+			return vtBool;
+		}
+		no_op_between();
+		return None;
 	}
 	eSpecialSymbols get_spec() {
 		try
@@ -117,6 +186,7 @@ private:
 	void check_variables() 
 	{
 		if (curToken == NULL || curToken->type != ttIdentifier) throw exception(ident_err);
+		else if (variables.find(get_ident()) != variables.end()) throw exception("variable already named");
 		else variables.insert(var :: value_type(get_ident(), None)); // map <string, CType> при разборе var - 's' , string
 	}
 	void check_type()
@@ -250,6 +320,17 @@ private:
 			skipto(starters_type { kwWhile, kwFor, kwIf }); cout << exp.what();
 		}
 	}
+	eVariantType get_variable_type()
+	{
+		eVariantType extype = None;
+		if (curToken->type == ttIdentifier) {
+			if (variables.find(get_ident()) != variables.end())
+			{
+				extype = variables.find(get_ident())->second;
+			}
+		}
+		return extype;
+	}
 	void variable() /* анализ конструкции <переменная> */
 	{
 		try
@@ -289,7 +370,8 @@ private:
 		try
 		{
 			accept(kwIf);
-			expression();
+			auto exptype = expression();
+			if (!compatible_to(exptype, vtBool)) compatible_error();
 			accept(kwThen);
 			statement();
 		}
@@ -315,13 +397,15 @@ private:
 		try
 		{
 			accept(kwFor);
-			accept_ident();
+			accept_ident(); // на самом деле может быть здесь тип не для цикла 
 			accept(ssAssigment);
-			expression();
+			auto exptype = expression();
+			if (!compatible_to(vtInt, exptype)) compatible_error();
 			if (curToken->type == ttKeywords && get_keyword() == kwTo || get_keyword() == kwToDownTo)
 			{
 				getNext();
-				expression();
+				auto exptype = expression();
+				if (!compatible_to(vtInt, exptype)) compatible_error();
 				accept(kwDo);
 				statement();
 			}
@@ -370,9 +454,11 @@ private:
 	{
 		try
 		{
+			auto vartype = get_variable_type();
 			variable();
 			accept(ssAssigment);
-			expression();
+			auto exptype = expression(); 
+			if (!compatible_to(vartype, exptype)) compatible_error();
 		}
 		catch (const std::exception& exp)
 		{
@@ -380,54 +466,95 @@ private:
 			cout << exp.what();
 		}
 	}
-	void expression() 
+	eVariantType expression()
 	{
-		simple_expression();
-		if (curToken->type == ttSpecialSymbols && realation_operator())
+		eSpecialSymbols res = ssNone;
+		auto ex1type = simple_expression();
+		if (curToken->type == ttSpecialSymbols)
 		{
-			simple_expression();
-		}
-	}
-	void simple_expression() 
-	{
-		term();
-		while (curToken->type == ttSpecialSymbols && additive_op())
-		{
-			term();
-		}
-	}
-	void term() // slogaemoe
-	{
-		factor();
-		if (curToken -> type == ttSpecialSymbols)
-		{
-			while (mult_op())
+			res = realation_operator();
+			if (res != ssNone)
 			{
-				factor();
+				auto ex2type = simple_expression();
+				ex1type = exist_op(ex1type, ex2type, res);
 			}
 		}
+		return ex1type;
 	}
-	void factor() // mnozitel
+	eVariantType simple_expression()
+	{
+		eSpecialSymbols res = ssNone;
+		auto ex1type = term();
+		if (curToken->type == ttSpecialSymbols)
+		{
+			if (curToken->type == ttSpecialSymbols) res = additive_op();
+			else res = ssNone;
+		}
+		while (res != ssNone)
+		{
+			auto ex2type = term();
+			ex1type = exist_op(ex1type, ex2type, res);
+			if (curToken->type == ttSpecialSymbols)  res = additive_op();
+			else res = ssNone;
+		}
+		return ex1type;
+	}
+	eVariantType term() // slogaemoe
+	{
+		eSpecialSymbols res = ssNone;
+		auto ex1type = factor();
+		if (curToken->type == ttSpecialSymbols) res = mult_op();
+		while (res != ssNone)
+		{
+			auto ex2type = factor();
+			ex1type = exist_op(ex1type, ex2type, res);
+			if (curToken->type == ttSpecialSymbols) res = mult_op();
+			else res = ssNone;
+		}
+		return ex1type;
+	}
+	eVariantType factor() // mnozitel
 	{ 
+		eVariantType exptype = None;
 		if (curToken->type == ttSpecialSymbols)
 		{
 			accept(ssLeftCurveBrascet);
-			expression();
+			exptype = expression();
 			accept(ssRightCurveBrascet);
 		}
 		else
 		{
 			switch (curToken->type) {
 			case ttConstants:
+				switch (dynamic_cast<ConstToken*>(curToken.get())->data.index())
+				{
+					case 0:
+						exptype = vtInt;
+						break;
+					case 1:
+						exptype = vtReal;
+						break;
+					case 2:
+						exptype = vtString;
+						break;
+					case 3:
+						exptype = vtBool;
+						break;
+					default: /* ошибка */
+						exptype = None;
+				}
 				accept(ttConstants);
 				break;
 			case ttIdentifier:
+				// check that it is variable
+				exptype = get_variable_type();
 				accept(ttIdentifier);
 				break;
 			}
 		}
+		return exptype;
 	}
-	bool mult_op() // mult op 
+	eSpecialSymbols mult_op() // mult op 
 	{
 		eSpecialSymbols op;
 		op = get_spec();
@@ -435,53 +562,53 @@ private:
 		{
 		case ssDiv:
 			accept(ssDiv);
-			return true;
+			return op;
 			break;
 		case ssMult:
 			accept(ssMult);
-			return true;
+			return op;
 			break;
 		}
-		return false;
+		return ssNone;
 	}
-	bool additive_op() {
+	eSpecialSymbols additive_op() {
 		eSpecialSymbols op;
 		op = get_spec();
 		switch (op)
 		{
 		case ssMinus:
 			accept(ssMinus);
-			return true;
+			return op;
 			break;
 		case ssPlus:
 			accept(ssPlus);
-			return true;
+			return op;
 			break;
 		}
-		return false;
+		return ssNone;
 	}
-	bool realation_operator() {
+    eSpecialSymbols realation_operator() {
 		eSpecialSymbols op;
 		op = get_spec();
 		switch (op)
 		{
 		case ssEqual:
 			accept(ssEqual);
-			return true;
+			return op;
 			break;
 		case ssNoEqual:
 			accept(ssNoEqual);
-			return true;
+			return op;
 			break;
 		case ssGreater:
 			accept(ssGreater);
-			return true;
+			return op;
 			break;
 		case ssLesser:
 			accept(ssLesser);
-			return true;
+			return op;
 			break;
 		}
-		return false;
+		return ssNone;
 	}
 };

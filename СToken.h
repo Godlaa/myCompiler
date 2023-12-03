@@ -30,6 +30,9 @@ enum eKeyWords {
     kwTo,
     kwToDownTo,
     kwUntil,
+    kwAnd,
+    kwOr,
+    kwNot,
 };
 
 enum eSpecialSymbols {
@@ -49,6 +52,7 @@ enum eSpecialSymbols {
     ssGreater,
     ssLesser,
     ssMod,
+    ssNone
 };
 
 enum eVariantType {

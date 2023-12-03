@@ -223,6 +223,18 @@ public:
                 kwToken->kw = kwUntil;
                 return kwToken;
             }
+            else if (identifier == "and") {
+                kwToken->kw = kwUntil;
+                return kwToken;
+            }
+            else if (identifier == "or") {
+                kwToken->kw = kwUntil;
+                return kwToken;
+            }
+            else if (identifier == "not") {
+                kwToken->kw = kwUntil;
+                return kwToken;
+            }
             auto idToken = make_unique<IdentToken>();
             idToken->type = ttIdentifier;
             idToken->ident = identifier;
