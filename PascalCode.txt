@@ -2,7 +2,7 @@ program Evklid;
 var M, N :integer;
 x, y : real;
 begin
-M := 5;
+M := '12312321';
 N := 1;
 while M <> N do
 begin
