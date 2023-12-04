@@ -7,10 +7,7 @@
 
 #define ident_err ("Row position: " + to_string(lexer->get_token_cords().first) + "  Position in line: " + to_string(lexer->get_token_cords().second) + " expected ident\n").c_str()
 
-void compatible_error() {
-	cout << "compatible_error\n";
-}
+#define compatible_error cout << "Row position: " + to_string(lexer->get_token_cords().first) + "  Position in line: " + to_string(lexer->get_token_cords().second) + " compatible_error\n";
 
-void no_op_between() {
-	cout << "no_op_between\n";
-}
+#define no_op_between cout << "Row position: " + to_string(lexer->get_token_cords().first) + "  Position in line: " + to_string(lexer->get_token_cords().second) + " no_op_between\n";
+	

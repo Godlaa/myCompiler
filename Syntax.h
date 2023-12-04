@@ -16,13 +16,15 @@ class Syntax
 public:
 	Syntax(shared_ptr<Lexer> lexer) { this->lexer = lexer; }
 	void run_syntax() {
+		zero_level_variables();
 		program();
 	}
 private:
 	shared_ptr<Token> curToken;
 	shared_ptr<Lexer> lexer;
-	typedef map<string, eVariantType> var;
+	typedef map<string, pair<int, eVariantType>> var;
 	var variables;
+	int cur_scope = 0;
 	// хватит ловить в try catch и например скипать до [then else] в блоке if 
 	void getNext() 
 	{
@@ -102,7 +104,7 @@ private:
 			(type1 == vtBool && type2 == vtBool)) {
 			return vtBool;
 		}
-		no_op_between();
+		no_op_between;
 		return None;
 	}
 	eSpecialSymbols get_spec() {
@@ -183,11 +185,28 @@ private:
 			getNext();
 		}
 	}
+	void zero_level_variables() {
+		variables["INT_MAX"] = pair(0, vtInt);
+		variables["INT_MIN"] = pair(0, vtInt);
+		variables["PI"] = pair(0, vtReal);
+		variables["EXP"] = pair(0, vtReal);
+	}
+	var variable_level()
+	{
+		var level_map;
+		for (const auto& element : variables) {
+			if (element.second.first == cur_scope) {
+				level_map[element.first] = (element.first, pair(cur_scope, element.second.second));
+			}
+		}
+		return level_map;
+	}
 	void check_variables() 
 	{
+		var cur_level_variables = variable_level();
 		if (curToken == NULL || curToken->type != ttIdentifier) throw exception(ident_err);
-		else if (variables.find(get_ident()) != variables.end()) throw exception("variable already named");
-		else variables.insert(var :: value_type(get_ident(), None)); // map <string, CType> при разборе var - 's' , string
+		else if (cur_level_variables.find(get_ident()) != cur_level_variables.end()) throw exception("variable already named");
+		else variables[get_ident()] = pair(cur_scope, None); // map <string, CType> при разборе var - 's' , string
 	}
 	void check_type()
 	{
@@ -202,7 +221,7 @@ private:
 			else throw exception("unknown type");
 			for (auto& var : variables)
 			{
-				if (var.second == None) var.second = type;
+				if (var.second.second == None) var.second.second = type;
 			}
 		}
 	}
@@ -235,6 +254,7 @@ private:
 			if (kw_check == kwVar)
 			{
 				accept(kwVar);
+				cur_scope++;
 				do
 				{
 					same_var();
@@ -323,10 +343,11 @@ private:
 	eVariantType get_variable_type()
 	{
 		eVariantType extype = None;
+		var cur_level_variables = variable_level();
 		if (curToken->type == ttIdentifier) {
-			if (variables.find(get_ident()) != variables.end())
+			if (cur_level_variables.find(get_ident()) != cur_level_variables.end())
 			{
-				extype = variables.find(get_ident())->second;
+				extype = cur_level_variables.find(get_ident())->second.second;
 			}
 		}
 		return extype;
@@ -371,7 +392,7 @@ private:
 		{
 			accept(kwIf);
 			auto exptype = expression();
-			if (!compatible_to(exptype, vtBool)) compatible_error();
+			if (!compatible_to(exptype, vtBool)) compatible_error;
 			accept(kwThen);
 			statement();
 		}
@@ -400,12 +421,12 @@ private:
 			accept_ident(); // на самом деле может быть здесь тип не для цикла 
 			accept(ssAssigment);
 			auto exptype = expression();
-			if (!compatible_to(vtInt, exptype)) compatible_error();
+			if (!compatible_to(vtInt, exptype)) compatible_error;
 			if (curToken->type == ttKeywords && get_keyword() == kwTo || get_keyword() == kwToDownTo)
 			{
 				getNext();
 				auto exptype = expression();
-				if (!compatible_to(vtInt, exptype)) compatible_error();
+				if (!compatible_to(vtInt, exptype)) compatible_error;
 				accept(kwDo);
 				statement();
 			}
@@ -458,7 +479,7 @@ private:
 			variable();
 			accept(ssAssigment);
 			auto exptype = expression(); 
-			if (!compatible_to(vartype, exptype)) compatible_error();
+			if (!compatible_to(vartype, exptype)) compatible_error;
 		}
 		catch (const std::exception& exp)
 		{
