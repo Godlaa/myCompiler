@@ -114,6 +114,16 @@ public:
 class ConstToken : public Token {
 public:
     std::variant<int, float, std::string, bool> data;
+    int Get_Int() {
+        if (data.index() == vtInt) {
+            return get<int>(data);
+        }
+    };
+    float Get_Float() {
+        if (data.index() == vtInt) {
+            return get<float>(data);
+        }
+    };
     void Print() { 
         if (data.index() == vtInt) {
 			cout << std::get<int>(data) << ' ';

@@ -6,6 +6,7 @@
 #include <map>
 #include <unordered_set>
 #include "Errors.h"
+#include "Assembly.h"
 
 #define starters_type  vector<variant<eSpecialSymbols, eKeyWords>>
 #define kw_check curToken -> type == ttKeywords && get_keyword()
@@ -22,6 +23,7 @@ public:
 private:
 	shared_ptr<Token> curToken;
 	shared_ptr<Lexer> lexer;
+	Assembly asm_file;
 	typedef map<string, pair<int, eVariantType>> var;
 	var variables;
 	int cur_scope = 0;
@@ -195,7 +197,7 @@ private:
 	{
 		var level_map;
 		for (const auto& element : variables) {
-			if (element.second.first == cur_scope) {
+			if (element.second.first <= cur_scope) {
 				level_map[element.first] = (element.first, pair(cur_scope, element.second.second));
 			}
 		}
@@ -205,8 +207,8 @@ private:
 	{
 		var cur_level_variables = variable_level();
 		if (curToken == NULL || curToken->type != ttIdentifier) throw exception(ident_err);
-		else if (cur_level_variables.find(get_ident()) != cur_level_variables.end()) throw exception("variable already named");
-		else variables[get_ident()] = pair(cur_scope, None); // map <string, CType> при разборе var - 's' , string
+		else if (cur_level_variables.find(get_ident()) != cur_level_variables.end()) throw exception("variable already named\n");
+		else { asm_file.write_variable(get_ident()); variables[get_ident()] = pair(cur_scope, None); }// map <string, CType> при разборе var - 's' , string
 	}
 	void check_type()
 	{
@@ -236,7 +238,7 @@ private:
 			accept(ssDot);
 		}
 		catch (const std::exception& exp) { cout << exp.what(); }
-
+		asm_file.ending();
 	}
 	void block( )  // block
 	{
@@ -285,6 +287,7 @@ private:
 				accept_ident();
 			}
 			accept(ssColon);
+			asm_file.prossed();
 			type();
 		}
 		catch (const std::exception& exp)
@@ -352,11 +355,13 @@ private:
 		}
 		return extype;
 	}
-	void variable() /* анализ конструкции <переменная> */
+	string variable() /* анализ конструкции <переменная> */
 	{
 		try
-		{
-			accept_ident();
+		{		
+			string var;
+			var = string(dynamic_cast<IdentToken*>(curToken.get())->ident);
+			accept_ident();	
 			if (curToken->type == ttSpecialSymbols)
 			{
 				while (get_spec() == ssLeftCurveBrascet || get_spec() == ssDot)
@@ -380,6 +385,7 @@ private:
 					}
 				}
 			}
+			return var;
 		}
 		catch (const std::exception& exp)
 		{
@@ -476,9 +482,10 @@ private:
 		try
 		{
 			auto vartype = get_variable_type();
-			variable();
+			auto var = variable();
 			accept(ssAssigment);
-			auto exptype = expression(); 
+			auto exptype = expression(); 	
+			asm_file.assigment(var);
 			if (!compatible_to(vartype, exptype)) compatible_error;
 		}
 		catch (const std::exception& exp)
@@ -515,7 +522,21 @@ private:
 		{
 			auto ex2type = term();
 			ex1type = exist_op(ex1type, ex2type, res);
-			if (curToken->type == ttSpecialSymbols)  res = additive_op();
+			if (curToken->type == ttSpecialSymbols) 
+			{ 
+				switch (res)
+				{
+				case ssPlus:
+					asm_file.add();
+					break;
+				case ssMinus:
+					asm_file.substract();
+					break;
+				default:
+					break;
+				}
+				res = additive_op(); 
+			}
 			else res = ssNone;
 		}
 		return ex1type;
@@ -529,7 +550,21 @@ private:
 		{
 			auto ex2type = factor();
 			ex1type = exist_op(ex1type, ex2type, res);
-			if (curToken->type == ttSpecialSymbols) res = mult_op();
+			if (curToken->type == ttSpecialSymbols) 
+			{
+				switch (res)
+				{
+				case ssDiv:
+					asm_file.division();
+					break;
+				case ssMult:
+					asm_file.mult();
+					break;
+				default:
+					break;
+				}
+				 res = mult_op();
+			}
 			else res = ssNone;
 		}
 		return ex1type;
@@ -551,6 +586,7 @@ private:
 				{
 					case 0:
 						exptype = vtInt;
+						asm_file.value_to_stack(to_string(dynamic_cast<ConstToken*>(curToken.get())->Get_Int()));
 						break;
 					case 1:
 						exptype = vtReal;
@@ -569,6 +605,7 @@ private:
 			case ttIdentifier:
 				// check that it is variable
 				exptype = get_variable_type();
+				asm_file.value_to_stack(dynamic_cast<IdentToken*>(curToken.get())->ident);
 				accept(ttIdentifier);
 				break;
 			}

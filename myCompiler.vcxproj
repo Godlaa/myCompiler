@@ -54,6 +54,7 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.props" />
   </ImportGroup>
   <ImportGroup Label="Shared">
   </ImportGroup>
@@ -110,6 +111,13 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <MASM>
+      <GeneratePreprocessedSourceListing>false</GeneratePreprocessedSourceListing>
+    </MASM>
+    <MASM>
+      <EnableAssemblyGeneratedCodeListing>false</EnableAssemblyGeneratedCodeListing>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+    </MASM>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -131,16 +139,23 @@
     <ClCompile Include="Compiler.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <Text Include="assembler.txt" />
     <Text Include="PascalCode.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Assembly.h" />
     <ClInclude Include="Errors.h" />
     <ClInclude Include="InOutModule.h" />
     <ClInclude Include="Lexer.h" />
     <ClInclude Include="Syntax.h" />
     <ClInclude Include="СToken.h" />
   </ItemGroup>
+  <ItemGroup>
+    <MASM Include="asm.asm" />
+    <MASM Include="assembler.asm" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.targets" />
   </ImportGroup>
 </Project>

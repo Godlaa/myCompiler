@@ -1,13 +1,6 @@
 program Evklid;
-var M, N :integer;
-x, y : real;
+var i, x: integer;
 begin
-M := '12312321';
-N := 1;
-while M <> N do
-begin
-if M > N
-then M := M - N
-else N := N - M
-end
+i := 2 + 2 + 2 + 2 + 2;
+x := i * 2;
 end.
