@@ -1,7 +1,6 @@
 program Evklid;
 var i, x: integer;
 begin
-i := 2 + 2 + 2 + 2 + 2;
-x := i * 2;
-writeln x;
+i := 4 * (1 - 2);
+writeln i;
 end.

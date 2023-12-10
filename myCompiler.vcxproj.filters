@@ -23,9 +23,6 @@
     <Text Include="PascalCode.txt">
       <Filter>Исходные файлы</Filter>
     </Text>
-    <Text Include="assembler.txt">
-      <Filter>Исходные файлы</Filter>
-    </Text>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="СToken.h">
@@ -48,7 +45,7 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <MASM Include="asm.asm">
+    <MASM Include="assembler.asm">
       <Filter>Исходные файлы</Filter>
     </MASM>
   </ItemGroup>

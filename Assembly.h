@@ -47,6 +47,6 @@ public:
 	}
 private:
 	ofstream out;
-	string path = "assembler.txt";
+	string path = "assembler.asm";
 };
 
