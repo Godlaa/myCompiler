@@ -42,11 +42,11 @@ public:
 	void ending() {
 		out << "\nret\nexpression ENDP\nend";
 	}
-	void writeinfile(string instructions) {
-		out << instructions << endl;
+	void writeinfile(string var) {
+		out << "\nmov rax," + var;
 	}
 private:
 	ofstream out;
-	string path = "assembler.asm";
+	string path = "assembler.txt";
 };
 

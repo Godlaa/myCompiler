@@ -464,6 +464,12 @@ private:
 					forstatement(); break;
 				case kwEnd:
 					break;
+				case kwWriteln:
+					accept(kwWriteln);
+					asm_file.writeinfile(get_ident());
+					accept_ident();
+
+					break;
 				case kwUntil:
 					break;
 				case kwElse: break; /* в случае пустого оператора */

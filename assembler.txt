@@ -1,6 +1,6 @@
 .data
-i dword ?
-x dword ?
+i QWORD ?
+x QWORD ?
 .code
 expression proc
 
@@ -42,6 +42,7 @@ mul rdx
 push rax
 pop rax
 mov x, rax
+mov rax,x
 ret
 expression ENDP
 end

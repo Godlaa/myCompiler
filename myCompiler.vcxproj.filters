@@ -51,8 +51,5 @@
     <MASM Include="asm.asm">
       <Filter>Исходные файлы</Filter>
     </MASM>
-    <MASM Include="assembler.asm">
-      <Filter>Исходные файлы</Filter>
-    </MASM>
   </ItemGroup>
 </Project>

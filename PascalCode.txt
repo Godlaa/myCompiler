@@ -3,4 +3,5 @@ var i, x: integer;
 begin
 i := 2 + 2 + 2 + 2 + 2;
 x := i * 2;
+writeln x;
 end.

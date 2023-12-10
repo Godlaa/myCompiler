@@ -1,9 +1,8 @@
 .data
-    x QWORD ?
-    i QWORD ?
-    temp QWORD ?
+i QWORD ?
+x QWORD ?
 .code
-somefunction PROC
+expression proc
 
 mov rdx,2
 push rdx
@@ -43,7 +42,7 @@ mul rdx
 push rax
 pop rax
 mov x, rax
-
+mov rax,x
 ret
-somefunction ENDP
+expression ENDP
 end
