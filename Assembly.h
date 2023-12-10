@@ -8,7 +8,7 @@ class Assembly
 public:
 	Assembly() {
 		out.open(path);
-		out << ".data\n";
+		out << ".data\nfmtStr byte 'Result is: %d', 10, 0";
 	}
 	~Assembly() {	
 		out.close();
@@ -37,10 +37,10 @@ public:
 		out << var + " QWORD ?\n";
 	}
 	void prossed() {
-		out <<  ".code\nexpression proc\n";
+		out <<  ".code\nprint proc\nsub rsp, 20h; Allocate stack space for function parameters(32 bytes shadow space)\nlea rcx, fmtStr; param 1: format string\nmov rdx, rax; param 3: the 1st integer specifier(1st % d in the format string)\ncall printf\nadd rsp, 20h; Restore the stack\nret\nprint endp\nexpression proc\n";
 	}
 	void ending() {
-		out << "\nret\nexpression ENDP\nend";
+		out << "\ncall print\nret\nexpression ENDP\nend";
 	}
 	void writeinfile(string var) {
 		out << "\nmov rax," + var;

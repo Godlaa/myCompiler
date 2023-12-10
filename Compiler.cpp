@@ -2,7 +2,6 @@
 #include <fstream>
 #include "InOutModule.h"
 #include "Syntax.h"
-extern "C" int expression();
 int main() {
 	setlocale(LC_ALL, "RUSSIAN");
 	shared_ptr<Lexer> lexer = make_shared<Lexer>();
@@ -10,8 +9,6 @@ int main() {
 	std ::shared_ptr<Token> token = nullptr;
 	syntax->run_syntax();
 	lexer->print_lex_errors();
-
-	cout << "Result: " << expression();
 	return 0;
 }
 
