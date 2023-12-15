@@ -85,6 +85,14 @@ private:
 			return None;
 
 		case eSpecialSymbols::ssGreater:
+			if ((type1 == vtReal || type1 == vtInt) &&
+				(type2 == vtReal || type2 == vtInt)) {
+				return vtBool;
+			}
+			else if (type1 == vtString && type2 == vtString) {
+				return vtBool;
+			}
+			return None;
 		case eSpecialSymbols::ssLesser:
 			if ((type1 == vtReal || type1 == vtInt) &&
 				(type2 == vtReal || type2 == vtInt)) {
@@ -208,7 +216,7 @@ private:
 		var cur_level_variables = variable_level();
 		if (curToken == NULL || curToken->type != ttIdentifier) throw exception(ident_err);
 		else if (cur_level_variables.find(get_ident()) != cur_level_variables.end()) throw exception("variable already named\n");
-		else { asm_file.write_variable(get_ident()); variables[get_ident()] = pair(cur_scope, None); }// map <string, CType> при разборе var - 's' , string
+		else { variables[get_ident()] = pair(cur_scope, None); }// map <string, CType> при разборе var - 's' , string
 	}
 	void check_type()
 	{
@@ -223,7 +231,11 @@ private:
 			else throw exception("unknown type");
 			for (auto& var : variables)
 			{
-				if (var.second.second == None) var.second.second = type;
+				if (var.second.second == None)
+				{
+					var.second.second = type;
+					asm_file.write_variable(var.first, type);
+				}
 			}
 		}
 	}
@@ -245,6 +257,7 @@ private:
 		try
 		{
 			var_block();
+			asm_file.prossed();
 			op_block();
 		}
 		catch (const std::exception& exp) { skipto(starters_type { kwVar, kwBegin }); cout << exp.what(); }
@@ -287,7 +300,6 @@ private:
 				accept_ident();
 			}
 			accept(ssColon);
-			asm_file.prossed();
 			type();
 		}
 		catch (const std::exception& exp)
@@ -444,6 +456,7 @@ private:
 	}
 	void statement() /* анализ конструкции <оператор> */
 	{
+		eVariantType vt;
 		try
 		{
 			switch (curToken->type)
@@ -466,7 +479,8 @@ private:
 					break;
 				case kwWriteln:
 					accept(kwWriteln);
-					asm_file.writeinfile(get_ident());
+					vt = get_variable_type();
+					asm_file.print_to_console(get_ident(), vt);
 					accept_ident();
 
 					break;
@@ -491,7 +505,7 @@ private:
 			auto var = variable();
 			accept(ssAssigment);
 			auto exptype = expression(); 	
-			asm_file.assigment(var);
+			asm_file.assigment(var, vartype, exptype);
 			if (!compatible_to(vartype, exptype)) compatible_error;
 		}
 		catch (const std::exception& exp)
@@ -527,16 +541,18 @@ private:
 		while (res != ssNone)
 		{
 			auto ex2type = term();
+			eVariantType temp = ex1type;
 			ex1type = exist_op(ex1type, ex2type, res);
+
 			if (curToken->type == ttSpecialSymbols) 
 			{ 
 				switch (res)
 				{
 				case ssPlus:
-					asm_file.add();
+					asm_file.add(temp, ex2type);
 					break;
 				case ssMinus:
-					asm_file.substract();
+					asm_file.substract(temp, ex2type);
 					break;
 				default:
 					break;
@@ -555,16 +571,17 @@ private:
 		while (res != ssNone)
 		{
 			auto ex2type = factor();
+			eVariantType temp = ex1type;
 			ex1type = exist_op(ex1type, ex2type, res);
 			if (curToken->type == ttSpecialSymbols) 
 			{
 				switch (res)
 				{
 				case ssDiv:
-					asm_file.division();
+					asm_file.division(temp, ex2type);
 					break;
 				case ssMult:
-					asm_file.mult();
+					asm_file.mult(temp, ex2type);
 					break;
 				default:
 					break;
@@ -592,10 +609,11 @@ private:
 				{
 					case 0:
 						exptype = vtInt;
-						asm_file.value_to_stack(to_string(dynamic_cast<ConstToken*>(curToken.get())->Get_Int()));
+						asm_file.value_to_int_stack(to_string(dynamic_cast<ConstToken*>(curToken.get())->Get_Int()));
 						break;
 					case 1:
 						exptype = vtReal;
+						asm_file.value_to_float_stack_const(dynamic_cast<ConstToken*>(curToken.get())->Get_Float());
 						break;
 					case 2:
 						exptype = vtString;
@@ -611,7 +629,18 @@ private:
 			case ttIdentifier:
 				// check that it is variable
 				exptype = get_variable_type();
-				asm_file.value_to_stack(dynamic_cast<IdentToken*>(curToken.get())->ident);
+				switch (exptype)
+				{
+				case vtInt:
+					asm_file.value_to_int_stack(dynamic_cast<IdentToken*>(curToken.get())->ident);
+					break;
+				case vtReal:
+					asm_file.value_to_float_stack_ident(dynamic_cast<IdentToken*>(curToken.get())->ident);
+					break;
+				default:
+					break;
+				}
+				
 				accept(ttIdentifier);
 				break;
 			}

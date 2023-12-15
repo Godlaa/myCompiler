@@ -260,7 +260,7 @@ public:
                     if (count(number.begin(), number.end(), '.') > 1) throw exception("Lex error in code!");
                     else {
                         realToken->type = ttConstants;
-                        realToken->data = stof(number);
+                        realToken->data = number;
                         return realToken;
                     }
                 }

@@ -1,6 +1,8 @@
 program Evklid;
-var i, x: integer;
+var x: real; i, xt: integer;
 begin
-i := 4 * (1 - 2);
-writeln i;
+i := 20 * 5 * 10.5;
+x := 2 * 2.5 * i;
+xt := x * 2;
+writeln x;
 end.
