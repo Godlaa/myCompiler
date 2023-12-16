@@ -102,7 +102,6 @@ private:
 				return vtBool; 
 			}
 			return None; 
-
 		default:
 			return None;
 		}
@@ -525,6 +524,7 @@ private:
 			{
 				auto ex2type = simple_expression();
 				ex1type = exist_op(ex1type, ex2type, res);
+				if (ex1type == None) no_op_between;
 			}
 		}
 		return ex1type;
@@ -543,7 +543,7 @@ private:
 			auto ex2type = term();
 			eVariantType temp = ex1type;
 			ex1type = exist_op(ex1type, ex2type, res);
-
+			if (ex1type == None) no_op_between;
 			if (curToken->type == ttSpecialSymbols) 
 			{ 
 				switch (res)
@@ -573,6 +573,7 @@ private:
 			auto ex2type = factor();
 			eVariantType temp = ex1type;
 			ex1type = exist_op(ex1type, ex2type, res);
+			if (ex1type == None) no_op_between;
 			if (curToken->type == ttSpecialSymbols) 
 			{
 				switch (res)
